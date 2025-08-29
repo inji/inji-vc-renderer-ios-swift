@@ -38,7 +38,7 @@ class ViewController: UIViewController {
         }
         """
         
-        let mosipVc = """
+        let testVc = """
          {
                 "@context": [
                     "https://credentials/v1",
@@ -48,7 +48,7 @@ class ViewController: UIViewController {
                     }
                 ],
                 "credentialSubject": {
-                    "VID": "1234567890",
+                    "benefits": ["item1 on the list", "item2 on the list", "item3 on the list"],
                     "face": "data:image/jpeg;base64,/9j/4",
                     "gender": [
                         {
@@ -104,7 +104,7 @@ class ViewController: UIViewController {
         """
         
         Task {
-            let svg = await renderer.renderSvg(from: vcJsonString)
+            let svg = await renderer.renderSvg(from: testVc)
             print("Rendered SVG: \(svg)")
         }
     }

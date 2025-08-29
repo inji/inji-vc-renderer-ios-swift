@@ -1,229 +1,280 @@
 import XCTest
+
 @testable import InjiVcRenderer
-@testable import pixelpass
 
+final class InjiVcRendererTests: XCTestCase {
 
+    var renderer: InjiVcRenderer!
 
-
-class InjiVcRendererTests: XCTestCase {
     
 
-    func testRenderSvgSuccess() async {
-        let jsonString = """
-        {
-            "renderMethod": [
-                { "id": "https://example.com/template.svg" }
-            ],
-            "credentialSubject" : {
-                "fullName": "Tester",
-                "gender": {
-                    "eng": "Male"
-                }
+    override func setUp() {
+        super.setUp()
+        renderer = InjiVcRenderer()
+    }
+
+    override func tearDown() {
+        renderer = nil
+        super.tearDown()
+    }
+    
+    
+    
+
+    func testRenderSvgForMissingRenderMethod() {
+        let vcJson = """
+            { 
+                "someField": "someValue" 
             }
-        }
         """
-        let templateContent = """
-        <svg>
-            <text>{{credentialSubject/fullName}}</text>
-            <text>{{credentialSubject/gender}}</text>
-        </svg>
-        """
-        
-        let mockData = templateContent.data(using: .utf8)
-        let mockResponse = HTTPURLResponse(url: URL(string: "https://example.com/template.svg")!,
-                                           statusCode: 200,
-                                           httpVersion: nil,
-                                           headerFields: nil)
-        let mockSession = MockURLSession()
-        mockSession.mockData = mockData
-        mockSession.mockResponse = mockResponse
-        
-        let renderer = InjiVcRenderer(session: mockSession)
-        let result = await renderer.renderSvg(vcJsonString: jsonString)
-        
-        let expectedResult = """
-        <svg>
-            <text>Tester</text>
-            <text>Male</text>
-        </svg>
-        """
-        
-        XCTAssertEqual(result, expectedResult, "The rendered SVG did not match the expected result")
+
+        let result = renderer.renderSvg(vcJsonString: vcJson)
+
+        XCTAssertEqual(result, [])
     }
     
-    func testRenderSvgFailureEmptyJson() async {
-        let jsonString = """
-        """
-        let templateContent = """
-        <svg>
-            <text>{{credentialSubject/fullName}}</text>
-            <text>{{credentialSubject/gender}}</text>
-        </svg>
-        """
-        
-        let mockData = templateContent.data(using: .utf8)
-        let mockResponse = HTTPURLResponse(url: URL(string: "https://example.com/template.svg")!,
-                                           statusCode: 200,
-                                           httpVersion: nil,
-                                           headerFields: nil)
-        let mockSession = MockURLSession()
-        mockSession.mockData = mockData
-        mockSession.mockResponse = mockResponse
-        
-        let renderer = InjiVcRenderer(session: mockSession)
-        let result = await renderer.renderSvg(vcJsonString: jsonString)
-        
-        
-        XCTAssertEqual(result, "", "VcJson is empty")
-    }
-    
-    
-    func testRenderSvgFailure() async {
-        let jsonString = """
+    func testRenderSvgForInvalidRenderMethod() {
+        let vcJson = """
         {
-            "renderMethod": [
-                { "id": "https://example.com/template.svg" }
-            ]
+            "credentialSubject": {
+                "addressLine1": "test"
+            },
+            "renderMethod": [ "invalid" ]
         }
         """
-        
-        let mockSession = MockURLSession()
-        mockSession.mockError = NSError(domain: "Test", code: 1, userInfo: nil)
-        
-        let renderer = InjiVcRenderer(session: mockSession)
-        let result = await renderer.renderSvg(vcJsonString: jsonString)
-        
-        XCTAssertEqual(result, "", "The result should be an empty string when fetching content fails")
+
+        let result = renderer.renderSvg(vcJsonString: vcJson)
+
+        XCTAssertEqual(result, [])
     }
     
-    func testRenderSvgFailureEmptyJsonString() async {
-        let jsonString = """
-        """
-        
-        let mockSession = MockURLSession()
-        mockSession.mockError = NSError(domain: "Test", code: 1, userInfo: nil)
-        
-        let renderer = InjiVcRenderer(session: mockSession)
-        let result = await renderer.renderSvg(vcJsonString: jsonString)
-        
-        XCTAssertEqual(result, "", "The result should be an empty string when fetching content fails")
-    }
-    
-    func testLocaleBasedFieldReplacement() {
-        
-        let svgTemplateWithLocale = "<svg>{{credentialSubject/gender/eng}}</svg>"
-        let svgTemplateWithoutLocale = "<svg>{{credentialSubject/gender}}</svg>"
-        let svgTemplateWithUnavailableLocale = "<svg>{{credentialSubject/gender}}</svg>"
-        let svgTemplateWithInvalidKey = "<svg>{{credentialSubject/gend}}</svg>"
-        
-        let processedJson = [
-            "credentialSubject": [
-              "gender": ["eng": "English Male", "tam": "Tamil Male"]
-            ]
-        ]
-        
-        let expected = "<svg>English Male</svg>"
-        
-        let result1 = InjiVcRenderer().replacePlaceholders(svgTemplate: svgTemplateWithLocale, processedJson: processedJson);
-        XCTAssertEqual(result1, expected)
-        
-        let result2 = InjiVcRenderer().replacePlaceholders(svgTemplate: svgTemplateWithoutLocale, processedJson: processedJson);
-        XCTAssertEqual(result2, expected)
-        
-        let result3 = InjiVcRenderer().replacePlaceholders(svgTemplate: svgTemplateWithUnavailableLocale, processedJson: processedJson);
-        XCTAssertEqual(result3, expected)
-
-        let result4 = InjiVcRenderer().replacePlaceholders(svgTemplate: svgTemplateWithInvalidKey, processedJson: processedJson);
-        XCTAssertEqual(result4, "<svg></svg>")
-        
-        
-    }
-    
-    func testAddressFieldsReplacement() {
-        let svgTemplateWithLocale = "<svg>{{credentialSubject/fullAddressLine1/eng}}</svg>"
-        let svgTemplateWithoutLocale = "<svg>{{credentialSubject/fullAddressLine1}}</svg>"
-        let svgTemplateWithUnavailableLocale = "<svg>{{credentialSubject/fullAddressLine1/fr}}</svg>"
-
-        let processedJson = [
-            "credentialSubject": [
-              "fullAddressLine1": ["eng": "Test Address1, Test City"]
-            ]
-        ]
-
-        let result1 = InjiVcRenderer().replacePlaceholders(svgTemplate: svgTemplateWithLocale, processedJson: processedJson)
-        XCTAssertEqual(result1, "<svg>Test Address1, Test City</svg>")
-        
-        let result2 = InjiVcRenderer().replacePlaceholders(svgTemplate: svgTemplateWithoutLocale, processedJson: processedJson)
-        XCTAssertEqual(result2, "<svg>Test Address1, Test City</svg>")
-        
-        let result3 = InjiVcRenderer().replacePlaceholders(svgTemplate: svgTemplateWithUnavailableLocale, processedJson: processedJson)
-        XCTAssertEqual(result3, "<svg>Test Address1, Test City</svg>")
-
-    }
-    
-    func testAddressFieldsReplacementWithEmpty() {
-        let svgTemplate = "<svg>{{credentialSubject/fullAddressLine1/eng}}</svg>"
-
-        let processedJson = [
-            "credentialSubject": [
-              "fullAddressLine1": []
-            ]
-        ]
-
-        let result1 = InjiVcRenderer().replacePlaceholders(svgTemplate: svgTemplate, processedJson: processedJson)
-        XCTAssertEqual(result1, "<svg></svg>")
-
-    }
-    
-    func testBenefitsFieldsReplacement() {
-        let svgTemplate = "<svg>{{credentialSubject/benefitsLine1}}</svg>"
-
-        let processedJson = [
-            "credentialSubject": [
-              "benefitsLine1": "Full body check up, Critical Surgery"
-            ]
-        ]
-
-        let result1 = InjiVcRenderer().replacePlaceholders(svgTemplate: svgTemplate, processedJson: processedJson)
-        XCTAssertEqual(result1, "<svg>Full body check up, Critical Surgery</svg>")
-
-    }
-    
-    func testBenefitsFieldsReplacementWithEmpty() {
-        let svgTemplate = "<svg>{{credentialSubject/benefitsLine1}}</svg>"
-
-        let processedJson = [
-            "credentialSubject": [
-            ]
-        ]
-
-        let result1 = InjiVcRenderer().replacePlaceholders(svgTemplate: svgTemplate, processedJson: processedJson)
-        XCTAssertEqual(result1, "<svg></svg>")
-
-    }
-
-}
-
-class MockURLSession: URLSession {
-    var mockData: Data?
-    var mockResponse: URLResponse?
-    var mockError: Error?
-
-    override func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
-        return MockURLSessionDataTask {
-            completionHandler(self.mockData, self.mockResponse, self.mockError)
+    func testRenderSvgForRenderMethodAsEmptyObject() {
+        let vcJson = """
+        {
+            "credentialSubject": {
+                "addressLine1": "test"
+            },
+            "renderMethod": {}
         }
+        """
+
+        let result = renderer.renderSvg(vcJsonString: vcJson)
+
+        XCTAssertEqual(result, [])
     }
-}
+    
+    func testRenderSvgForRenderMethodAsEmptyArray() {
+        let vcJson = """
+        {
+            "credentialSubject": {
+                "addressLine1": "test"
+            },
+            "renderMethod": []
+        }
+        """
 
-class MockURLSessionDataTask: URLSessionDataTask {
-    private let closure: () -> Void
+        let result = renderer.renderSvg(vcJsonString: vcJson)
 
-    init(closure: @escaping () -> Void) {
-        self.closure = closure
+        XCTAssertEqual(result, [])
     }
+    
+    func testRenderSvgForRenderMethodArrayWithInvalidRenderSuite() {
+        let vcJson = """
+              {
+                "renderMethod": [
+                   { "type": "TemplateRenderMethod", "renderSuite": "invalid-suite" }
+                ]
+            }
+        """
 
-    override func resume() {
-        closure()
+        let result = renderer.renderSvg(vcJsonString: vcJson)
+
+        XCTAssertEqual(result, [])
+    }
+    
+    func testRenderSvgForRenderMethodArrayWithType() {
+        let vcJson = """
+        {
+           "renderMethod": [
+              { "type": "invalid", "renderSuite": "svg-mustache" }
+           ]
+        }
+        """
+
+        let result = renderer.renderSvg(vcJsonString: vcJson)
+
+        XCTAssertEqual(result, [])
+    }
+    
+    func testRenderSvgForRenderMethodObjectWithInvalidRenderSuite() {
+        let vcJson = """
+              {
+                "renderMethod": { "type": "TemplateRenderMethod", "renderSuite": "invalid-suite" }
+            }
+        """
+
+        let result = renderer.renderSvg(vcJsonString: vcJson)
+
+        XCTAssertEqual(result, [])
+    }
+    
+    func testRenderSvgForRenderMethodObjectWithType() {
+        let vcJson = """
+        {
+           "renderMethod": { "type": "invalid", "renderSuite": "svg-mustache" }
+        }
+        """
+
+        let result = renderer.renderSvg(vcJsonString: vcJson)
+
+        XCTAssertEqual(result, [])
+    }
+    
+    func testRenderSvgForRenderMethodObject_EmbeddedSingleVc() {
+        let vcJson = """
+         { 
+                "credentialSubject": {
+                    "fullName": "John Doe"
+                },
+                "renderMethod": {
+                    "type": "TemplateRenderMethod",
+                    "renderSuite": "svg-mustache",
+                    "template": "data:image/svg+xml;base64,PHN2Zz5GdWxsIE5hbWUgLSB7ey9jcmVkZW50aWFsU3ViamVjdC9mdWxsTmFtZX19PC9zdmc+"
+                  }
+              }
+        """
+
+        let result = renderer.renderSvg(vcJsonString: vcJson)
+
+        XCTAssertEqual(result, ["<svg>Full Name - John Doe</svg>"])
+    }
+    
+    func testRenderSvgForRenderMethodArray_EmbeddedMultipleRenderMethod() {
+        let vcJson = """
+            { 
+                "credentialSubject": {
+                    "fullName": "John Doe",
+                    "email": "test@gmail.com"
+                },
+                "renderMethod": [
+                  {
+                    "type": "TemplateRenderMethod",
+                    "renderSuite": "svg-mustache",
+                    "template": "data:image/svg+xml;base64,PHN2Zz5GdWxsIE5hbWUgLSB7ey9jcmVkZW50aWFsU3ViamVjdC9mdWxsTmFtZX19PC9zdmc+"
+                  },
+                  {
+                    "type": "TemplateRenderMethod",
+                    "renderSuite": "svg-mustache",
+                    "template": "data:image/svg+xml;base64,PHN2Zz5FbWFpbCAtIHt7L2NyZWRlbnRpYWxTdWJqZWN0L2VtYWlsfX08L3N2Zz4="
+                  }
+              ]
+              }
+        """
+
+        let result = renderer.renderSvg(vcJsonString: vcJson)
+
+        XCTAssertEqual(result, ["<svg>Full Name - John Doe</svg>", "<svg>Email - test@gmail.com</svg>"])
+    }
+    
+    func testRenderSvgForRenderMethodArray_EmbeddedMultipleRenderMethodWithOneInvalidType() {
+        let vcJson = """
+             { 
+                "credentialSubject": {
+                    "fullName": "John Doe",
+                    "email": "test@gmail.com"
+                },
+                "renderMethod": [
+                  {
+                    "type": "invalid",
+                    "renderSuite": "svg-mustache",
+                    "template": "data:image/svg+xml;base64,PHN2Zz48dGV4dD5Gcm9udCBOYW1lIC0ge3tjcmVkZW50aWFsU3ViamVjdC9mdWxsTmFtZX19PC90ZXh0Pjwvc3ZnPg=="
+                  },
+                  {
+                    "type": "TemplateRenderMethod",
+                    "renderSuite": "svg-mustache",
+                    "template": "data:image/svg+xml;base64,PHN2Zz5FbWFpbCAtIHt7L2NyZWRlbnRpYWxTdWJqZWN0L2VtYWlsfX08L3N2Zz4="
+                  }
+              ]
+              }
+        """
+
+        let result = renderer.renderSvg(vcJsonString: vcJson)
+
+        XCTAssertEqual(result, ["<svg>Email - test@gmail.com</svg>"])
+    }
+    
+    func testRenderSvgForRenderMethodArray_EmbeddedMultipleRenderMethodWithOneInvalidUri() {
+        let vcJson = """
+              { 
+                "credentialSubject": {
+                    "fullName": "John Doe",
+                    "email": "test@gmail.com"
+                },
+                "renderMethod": [
+                  {
+                    "type": "TemplateRenderMethod",
+                    "renderSuite": "svg-mustache",
+                    "template": "data:image/svg+xml;base64,@@@INVALIDBASE64###!!!"
+                  },
+                  {
+                    "type": "TemplateRenderMethod",
+                    "renderSuite": "svg-mustache",
+                    "template": "data:image/svg+xml;base64,PHN2Zz5FbWFpbCAtIHt7L2NyZWRlbnRpYWxTdWJqZWN0L2VtYWlsfX08L3N2Zz4="
+                  }
+              ]
+              }
+        """
+
+        let result = renderer.renderSvg(vcJsonString: vcJson)
+
+        XCTAssertEqual(result, ["<svg>Email - test@gmail.com</svg>"])
+    }
+    
+    func testRenderSvgForRenderMethodArray_EmbeddedMultipleRenderMethodWithAllInvalidUri() {
+        let vcJson = """
+         { 
+                "credentialSubject": {
+                    "fullName": "John Doe",
+                    "email": "test@gmail.com"
+                },
+                "renderMethod": [
+                  {
+                    "type": "TemplateRenderMethod",
+                    "renderSuite": "svg-mustache",
+                    "template": "data:image/svg+xml;base64,@@@INVALIDBASE64###!!!"
+                  },
+                  {
+                    "type": "TemplateRenderMethod",
+                    "renderSuite": "svg-mustache",
+                    "template": "data:image/svg+xml;base64,@@@INVALIDBASE64###!!!"
+                  }
+              ]
+              }
+        """
+
+        let result = renderer.renderSvg(vcJsonString: vcJson)
+
+        XCTAssertEqual(result, [])
+    }
+    
+    
+    
+    func testRenderSvgForRenderMethodObject_PlaceholderNotInVC() {
+        let vcJson = """
+              { 
+                "credentialSubject": {
+                    "middleName": "John Doe"
+                },
+                "renderMethod": {
+                    "type": "TemplateRenderMethod",
+                    "renderSuite": "svg-mustache",
+                    "template": "data:image/svg+xml;base64,PHN2Zz5GdWxsIE5hbWUgLSB7ey9jcmVkZW50aWFsU3ViamVjdC9mdWxsTmFtZX19PC9zdmc+"
+                  }
+              }
+        """
+
+        let result = renderer.renderSvg(vcJsonString: vcJson)
+
+        XCTAssertEqual(result, ["<svg>Full Name - -</svg>"])
     }
 }

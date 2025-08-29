@@ -13,7 +13,6 @@
 		C392EA542C65C75100329025 /* Base in Resources */ = {isa = PBXBuildFile; fileRef = C392EA532C65C75100329025 /* Base */; };
 		C392EA562C65C75400329025 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C392EA552C65C75400329025 /* Assets.xcassets */; };
 		C392EA592C65C75400329025 /* Base in Resources */ = {isa = PBXBuildFile; fileRef = C392EA582C65C75400329025 /* Base */; };
-		C392EA632C65C80000329025 /* InjiVcRenderer in Frameworks */ = {isa = PBXBuildFile; productRef = C392EA622C65C80000329025 /* InjiVcRenderer */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,7 +32,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C392EA632C65C80000329025 /* InjiVcRenderer in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -88,7 +86,6 @@
 			);
 			name = InjiVcRendererExample;
 			packageProductDependencies = (
-				C392EA622C65C80000329025 /* InjiVcRenderer */,
 			);
 			productName = InjiVcRendererExample;
 			productReference = C392EA492C65C75100329025 /* InjiVcRendererExample.app */;
@@ -378,13 +375,6 @@
 			relativePath = ../InjiVcRenderer;
 		};
 /* End XCLocalSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		C392EA622C65C80000329025 /* InjiVcRenderer */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = InjiVcRenderer;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C392EA412C65C75100329025 /* Project object */;
 }
