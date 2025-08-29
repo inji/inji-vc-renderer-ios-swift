@@ -13,6 +13,9 @@ enum SvgHelper {
                 if let id = templateObj[Constants.ID] as? String {
                     var rawSvg = networkHandler.fetchSvgAsText(url: id) ?? ""
                     
+                    if ((rawSvg.contains(Constants.QR_CODE_PLACEHOLDER))) {
+                           rawSvg = injectQrCodePlaceholder(svgTemplate: rawSvg , vcJsonString: vcJsonString)
+                       }
                     
                     if let renderPropsArray = templateObj[Constants.RENDER_PROPERTY] as? [String] {
                         rawSvg = SvgPlaceholderHelper.preserveRenderProperty(svgTemplate: rawSvg, renderProperties: renderPropsArray)
@@ -24,6 +27,9 @@ enum SvgHelper {
             case let templateStr as String:
                 var rawSvg = decodeSvgDataUriToSvgTemplate(templateStr)
                 
+                if ((rawSvg?.contains(Constants.QR_CODE_PLACEHOLDER)) != nil) {
+                       rawSvg = injectQrCodePlaceholder(svgTemplate: rawSvg ?? "", vcJsonString: vcJsonString)
+                   }
                 
                 svgTemplate = rawSvg
                 
@@ -69,18 +75,23 @@ enum SvgHelper {
     }
     
     private static func decodeSvgDataUriToSvgTemplate(_ svgDataUri: String) -> String? {
-        // Extract the base64 part after "base64,"
         guard let range = svgDataUri.range(of: "base64,") else {
             return nil
         }
         
         let base64Part = String(svgDataUri[range.upperBound...])
         
-        // Decode Base64
         guard let decodedData = Data(base64Encoded: base64Part) else {
             return nil
         }
         
         return String(data: decodedData, encoding: .utf8)
     }
+    
+    private static func injectQrCodePlaceholder(svgTemplate: String, vcJsonString: String) -> String {
+        let qrBase64 = QrCodeGenerator().generateQRCodeImage(vcJson: vcJsonString)
+        let qrImageTag = "\(Constants.QR_IMAGE_PREFIX),\(qrBase64)"
+        return svgTemplate.replacingOccurrences(of: Constants.QR_CODE_PLACEHOLDER, with: qrImageTag)
+    }
+    
 }

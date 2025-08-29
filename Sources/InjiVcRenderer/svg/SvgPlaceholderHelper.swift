@@ -86,7 +86,6 @@ public class SvgPlaceholderHelper {
     }
     
     private static func extractFromLangArray(array: [[String: Any]], lang: String) -> String? {
-        // First try locale
         if let match = array.first(where: { ($0["language"] as? String) == lang }) {
             return match["value"] as? String
         }
@@ -164,4 +163,5 @@ public class SvgPlaceholderHelper {
         guard let first = array.first as? [String: Any] else { return false }
         return first["language"] != nil && first["value"] != nil
     }
+
 }
