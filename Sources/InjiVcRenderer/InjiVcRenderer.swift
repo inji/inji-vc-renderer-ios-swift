@@ -1,6 +1,11 @@
 import Foundation
 
 public class InjiVcRenderer {
+    
+    public init()
+    {
+        
+    }
     /**
      Renders SVG templates defined in the VC's renderMethod section.
      Supports fetching templates from URLs and data URIs.
