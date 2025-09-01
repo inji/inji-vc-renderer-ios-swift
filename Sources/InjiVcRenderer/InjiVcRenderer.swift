@@ -1,6 +1,6 @@
 import Foundation
 
-class InjiVcRenderer {
+public class InjiVcRenderer {
     /**
      Renders SVG templates defined in the VC's renderMethod section.
      Supports fetching templates from URLs and data URIs.
@@ -9,7 +9,7 @@ class InjiVcRenderer {
      - Parameter vcJsonString: The Verifiable Credential as a JSON string.
      - Returns: A list of rendered SVG strings. Empty list if no valid render methods found or on error.
      */
-    func renderSvg(vcJsonString: String) -> [String] {
+    public func renderSvg(vcJsonString: String) -> [String] {
         do {
             guard let data = vcJsonString.data(using: .utf8),
                   let vcJsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
