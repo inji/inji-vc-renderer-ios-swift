@@ -1,6 +1,6 @@
 import Foundation
 
-class NetworkHandler {
+class NetworkHandler: NetworkHandlerProtocol {
     func fetchSvgAsText(url: String) -> String? {
         guard let url = URL(string: url) else { return nil }
         
@@ -33,7 +33,7 @@ class NetworkHandler {
         }
         
         task.resume()
-        semaphore.wait() // 🚨 Blocks until request finishes (sync like OkHttp in Kotlin)
+        semaphore.wait() 
         return result
     }
 }

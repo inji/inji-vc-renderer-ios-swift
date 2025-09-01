@@ -1,7 +1,7 @@
 import Foundation
 import pixelpass
 
-public class QrCodeGenerator {
+public class QrCodeGenerator: QrCodeGeneratorProtocol {
     
     func generateQRCodeImage(vcJson: String) -> String {
         let pixelPass = PixelPass()
