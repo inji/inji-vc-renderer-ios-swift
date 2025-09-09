@@ -2,13 +2,17 @@ import Foundation
 import pixelpass
 
 public class QrCodeGenerator: QrCodeGeneratorProtocol {
+
     
-    func generateQRCodeImage(vcJson: String) -> String {
+    func generateQRCodeImage(vcJson: String, traceabilityId: String) throws -> String {
         let pixelPass = PixelPass()
         if let qrCodeData = pixelPass.generateQRCode(data: vcJson, ecc: .M, header: "HDR") {
-            let base64String = qrCodeData.base64EncodedString()
-            return base64String
+            return qrCodeData.base64EncodedString()
         }
-        return ""
+        throw QRCodeGenerationFailureException(traceabilityId: traceabilityId, className: "QrCodeGenerator")
     }
+}
+
+protocol QrCodeGeneratorProtocol {
+    func generateQRCodeImage(vcJson: String, traceabilityId: String) throws -> String
 }

@@ -8,7 +8,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         
         super.viewDidLoad()
-        let renderer = InjiVcRenderer()
+        let renderer = InjiVcRenderer("sample-app")
         let insuranceVc = """
         {
             "credentialSubject": {
@@ -104,7 +104,7 @@ class ViewController: UIViewController {
         """
         
         Task {
-            let svg = await renderer.renderSvg(from: testVc)
+            let svg = await renderer.renderVC(vcJsonString: testVc)
             print("Rendered SVG: \(svg)")
         }
     }

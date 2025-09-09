@@ -3,8 +3,11 @@ import XCTest
 @testable import InjiVcRenderer
 
 final class JsonPointerResolverTests: XCTestCase {
+    
+    let traceabilityId = "test-id"
 
-    func testReplaceSimpleObjectField() {
+
+    func testReplaceSimpleObjectField() throws {
         let template = "<svg >{{/credentialSubject/gender/0/value}}##{{/credentialSubject/fullName}}</svg>"
         let json: [String: Any] = [
             "credentialSubject": [
@@ -15,11 +18,11 @@ final class JsonPointerResolverTests: XCTestCase {
             ]
         ]
         let expected = "<svg >English Male##John</svg>"
-        let result = JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json)
+        let result =  try JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json, traceabilityId: traceabilityId)
         XCTAssertEqual(result, expected)
     }
 
-    func testReplaceArrayFields() {
+    func testReplaceArrayFields() throws {
         let template = "<svg >{{/credentialSubject/benefits/0}}, {{/credentialSubject/benefits/1}}</svg>"
         let json: [String: Any] = [
             "credentialSubject": [
@@ -32,11 +35,11 @@ final class JsonPointerResolverTests: XCTestCase {
             ]
         ]
         let expected = "<svg >Item 1 is on the list, Item 2 is on the list</svg>"
-        let result = JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json)
+        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json, traceabilityId: traceabilityId)
         XCTAssertEqual(result, expected)
     }
 
-    func testReplaceMissingPointerReturnsDash() {
+    func testReplaceMissingPointerReturnsDash() throws {
         let template = "<svg >{{/credentialSubject/email}}##{{/credentialSubject/middleName}}</svg>"
         let json: [String: Any] = [
             "credentialSubject": [
@@ -45,11 +48,11 @@ final class JsonPointerResolverTests: XCTestCase {
             ]
         ]
         let expected = "<svg >-##-</svg>"
-        let result = JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json)
+        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json, traceabilityId: traceabilityId)
         XCTAssertEqual(result, expected)
     }
 
-    func testReplaceFieldsWithLocaleAsObjects() {
+    func testReplaceFieldsWithLocaleAsObjects() throws {
         let template = "<svg>Gender: {{/credentialSubject/gender/eng}}, பாலினம் : {{/credentialSubject/gender/tam}} </svg>"
         let json: [String: Any] = [
             "credentialSubject": [
@@ -60,11 +63,11 @@ final class JsonPointerResolverTests: XCTestCase {
             ]
         ]
         let expected = "<svg>Gender: Male, பாலினம் : ஆண் </svg>"
-        let result = JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json)
+        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json, traceabilityId: traceabilityId)
         XCTAssertEqual(result, expected)
     }
 
-    func testReplaceFieldsWithLocaleAsArrayOfObjects() {
+    func testReplaceFieldsWithLocaleAsArrayOfObjects() throws {
         let template = "<svg>Gender: {{/credentialSubject/gender/0/value}}, பாலினம் : {{/credentialSubject/gender/1/value}} </svg>"
         let json: [String: Any] = [
             "credentialSubject": [
@@ -75,11 +78,11 @@ final class JsonPointerResolverTests: XCTestCase {
             ]
         ]
         let expected = "<svg>Gender: Male, பாலினம் : ஆண் </svg>"
-        let result = JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json)
+        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json, traceabilityId: traceabilityId)
         XCTAssertEqual(result, expected)
     }
 
-    func testReplaceNestedAddressFields() {
+    func testReplaceNestedAddressFields() throws {
         let template = "<svg>{{/credentialSubject/address/addressLine1/0/value}}</svg>"
         let json: [String: Any] = [
             "credentialSubject": [
@@ -95,27 +98,27 @@ final class JsonPointerResolverTests: XCTestCase {
             ]
         ]
         let expected = "<svg>TEST_ADDRESS_LINE_1eng</svg>"
-        let result = JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json)
+        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json, traceabilityId: traceabilityId)
         XCTAssertEqual(result, expected)
     }
 
-    func testReplaceFieldWithSlash() {
+    func testReplaceFieldWithSlash() throws {
         let template = "<svg >{{/credentialSubject/ac~1dc}}</svg>"
         let json: [String: Any] = [
             "credentialSubject": ["ac/dc": "current unit"]
         ]
         let expected = "<svg >current unit</svg>"
-        let result = JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json)
+        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json, traceabilityId: traceabilityId)
         XCTAssertEqual(result, expected)
     }
 
-    func testReplaceFieldWithTilde() {
+    func testReplaceFieldWithTilde() throws {
         let template = "<svg >{{/credentialSubject/a~0b}}</svg>"
         let json: [String: Any] = [
             "credentialSubject": ["a~b": "test"]
         ]
         let expected = "<svg >test</svg>"
-        let result = JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json)
+        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json, traceabilityId: traceabilityId)
         XCTAssertEqual(result, expected)
     }
 
@@ -124,7 +127,7 @@ final class JsonPointerResolverTests: XCTestCase {
         let json: [String: Any] = ["a": 1, "b": 2]
         let expected = "<svg>{\"a\":1,\"b\":2}</svg>"
         
-        let result = JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson: json)
+        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson: json, traceabilityId: traceabilityId)
         
         // Extract JSON portion between <svg> tags
         let resultJsonPart = result.replacingOccurrences(of: "<svg>", with: "")
@@ -138,50 +141,50 @@ final class JsonPointerResolverTests: XCTestCase {
         XCTAssertEqual(resultObj, expectedObj)
     }
 
-    func testEmptyArrayAndObjectPointers() {
+    func testEmptyArrayAndObjectPointers() throws {
         let template = "<svg>{{/emptyArray}},{{/emptyObject}}</svg>"
         let json: [String: Any] = ["emptyArray": [], "emptyObject": [:]]
         let expected = "<svg>[],{}</svg>"
-        let result = JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json)
+        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json, traceabilityId: traceabilityId)
         XCTAssertEqual(result, expected)
     }
 
-    func testArrayIndexOutOfBoundsReturnsDash() {
+    func testArrayIndexOutOfBoundsReturnsDash() throws {
         let template = "<svg>{{/items/99}}</svg>"
         let json: [String: Any] = ["items": ["one", "two"]]
         let expected = "<svg>-</svg>"
-        let result = JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json)
+        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json, traceabilityId: traceabilityId)
         XCTAssertEqual(result, expected)
     }
 
-    func testMultipleTildesAndSlashesInKey() {
+    func testMultipleTildesAndSlashesInKey() throws {
         let template = "<svg>{{/a~0b~1c}}</svg>"
         let json: [String: Any] = ["a~b/c": "value"]
         let expected = "<svg>value</svg>"
-        let result = JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json)
+        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json, traceabilityId: traceabilityId)
 
         XCTAssertEqual(result, expected)
     }
 
-    func testSpecialCharactersInKeys() {
-        let template = "<svg>{{/!@#$%^&*()}}</svg>"
-        let json: [String: Any] = ["!@#$%^&*()": "special"]
+    func testSpecialCharactersInKeys() throws {
+        let template = "<svg>{{/!@#$%^&*() throws}}</svg>"
+        let json: [String: Any] = ["!@#$%^&*() throws": "special"]
         let expected = "<svg>special</svg>"
-        let result = JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json)
+        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json, traceabilityId: traceabilityId)
 
         XCTAssertEqual(result, expected)
     }
 
-    func testUnicodeCharactersInKeys() {
+    func testUnicodeCharactersInKeys() throws {
         let template = "<svg>{{/ключ}}</svg>"
         let json: [String: Any] = ["ключ": "значение"]
         let expected = "<svg>значение</svg>"
-        let result = JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json)
+        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json, traceabilityId: traceabilityId)
 
         XCTAssertEqual(result, expected)
     }
 
-    func testReplaceSimpleObjectFieldWithRenderProperty() {
+    func testReplaceSimpleObjectFieldWithRenderProperty() throws {
         let template = "<svg >{{/issuer}}##{{/credentialSubject/fullName}}</svg>"
         let json: [String: Any] = [
             "issuer": "did:mosip:123456789",
@@ -191,11 +194,11 @@ final class JsonPointerResolverTests: XCTestCase {
             ]
         ]
         let expected = "<svg >did:mosip:123456789##-</svg>"
-        let result = JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json,  renderProperties: ["/issuer"])
+        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json,  renderProperties: ["/issuer"], traceabilityId: traceabilityId)
         XCTAssertEqual(result, expected)
     }
 
-    func testReplaceSimpleObjectFieldWithRenderPropertyAsArrayIndex() {
+    func testReplaceSimpleObjectFieldWithRenderPropertyAsArrayIndex() throws {
         let template = "<svg >{{/credentialSubject/gender/0/value}}##{{/credentialSubject/fullName}}</svg>"
         let json: [String: Any] = [
             "issuer": "did:mosip:123456789",
@@ -205,7 +208,7 @@ final class JsonPointerResolverTests: XCTestCase {
             ]
         ]
         let expected = "<svg >English Male##-</svg>"
-        let result = JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json, renderProperties: ["/credentialSubject/gender/0/value"])
+        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, vcJson : json, renderProperties: ["/credentialSubject/gender/0/value"], traceabilityId: traceabilityId)
 
        XCTAssertEqual(result, expected)
     }

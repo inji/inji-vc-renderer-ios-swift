@@ -10,12 +10,15 @@ final class JsonPointerResolver {
     private static let placeholderRegex = try! NSRegularExpression(
         pattern: #"\{\{(/[^}]*)\}\}|\{\{\}\}"#
     )
+    public static let className = String(describing: JsonPointerResolver.self)
+
 
     /// Replaces placeholders in an SVG template using a Verifiable Credential JSON.
     /// Supports optional whitelist of allowed placeholders.
     static func replacePlaceholders(svgTemplate: String,
                                     vcJson: Any,
-                                    renderProperties: [String]? = nil) -> String {
+                                    renderProperties: [String]? = nil,
+                                    traceabilityId: String) throws -> String {
         let nsRange = NSRange(svgTemplate.startIndex..<svgTemplate.endIndex,
                               in: svgTemplate)
         var result = svgTemplate
@@ -40,7 +43,15 @@ final class JsonPointerResolver {
             if pointerPath.isEmpty {
                 value = vcJson
             } else {
-                value = try? resolvePointer(root: vcJson, pointer: pointerPath)
+                do {
+                        value = try resolvePointer(root: vcJson, pointer: pointerPath)
+                    } catch JsonPointerError.notFound {
+                        print("ERROR [\(VcRendererErrorCodes.missingJsonPath)] - Missing: \(pointerPath) | Class: \(className) | TraceabilityId: \(traceabilityId)")
+                        value = nil
+                    } catch let error {
+                        print("ERROR while resolving pointer \(pointerPath): \(error) | Class: \(className) | TraceabilityId: \(traceabilityId)")
+                        value = nil
+                    }
             }
 
             let replacement: String

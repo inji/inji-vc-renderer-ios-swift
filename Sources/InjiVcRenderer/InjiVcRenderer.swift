@@ -2,9 +2,10 @@ import Foundation
 
 public class InjiVcRenderer {
     
-    public init()
-    {
-        
+    private let traceabilityId: String
+    
+    public init(traceabilityId: String) {
+        self.traceabilityId = traceabilityId
     }
     /**
      Renders SVG templates defined in the VC's renderMethod section.
@@ -14,36 +15,59 @@ public class InjiVcRenderer {
      - Parameter vcJsonString: The Verifiable Credential as a JSON string.
      - Returns: A list of rendered SVG strings. Empty list if no valid render methods found or on error.
      */
-    public func renderSvg(vcJsonString: String) -> [String] {
+    public func renderVC(vcJsonString: String) throws -> [String] {
+        let vcJsonObject = try parseVcJson(vcJsonString: vcJsonString)
+
+        let renderMethodArray = try SvgHelper.parseRenderMethod(vcJsonObject, traceabilityId: traceabilityId)
+        
+        var results: [String] = []
+
+        for case let renderMethod in renderMethodArray {
+            let svgTemplate = try SvgHelper.extractSvgTemplate(renderMethod: renderMethod, vcJsonString: vcJsonString, traceabilityId: traceabilityId)
+                   
+                   let renderProperties = (renderMethod[Constants.TEMPLATE] as? [String: Any])?[Constants.RENDER_PROPERTY] as? [String]
+                   
+                   let renderedSvg = try JsonPointerResolver.replacePlaceholders(
+                       svgTemplate: svgTemplate,
+                       vcJson: vcJsonObject,
+                       renderProperties: renderProperties,
+                       traceabilityId: traceabilityId
+                   )
+                   
+                   results.append(renderedSvg)
+               }
+               
+               return results
+       }
+    
+    private func parseVcJson(vcJsonString: String) throws -> [String: Any] {
         do {
-            guard let data = vcJsonString.data(using: .utf8),
-                  let vcJsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                return []
+            guard let data = vcJsonString.data(using: .utf8) else {
+                throw VcRendererException(
+                    errorCode: VcRendererErrorCodes.invalidRenderMethod,
+                    message: "Invalid JSON input (data encoding failed)",
+                    className: String(describing: InjiVcRenderer.self),
+                    traceabilityId: traceabilityId
+                )
             }
-
-            let renderMethodArray = SvgHelper.parseRenderMethod(vcJsonObject)
-
-            var results: [String] = []
-
-            for case let renderMethod as [String: Any] in renderMethodArray {
-                let svgTemplate = SvgHelper.extractSvgTemplate(renderMethod: renderMethod, vcJsonString: vcJsonString)
-
-                if !svgTemplate.isEmpty {
-                    let renderProperties = (renderMethod["template"] as? [String: Any])?["renderProperty"] as? [String]
-
-                    let renderedSvg = JsonPointerResolver.replacePlaceholders(
-                        svgTemplate: svgTemplate,
-                        vcJson: vcJsonObject,
-                        renderProperties: renderProperties
-                    )
-                    results.append(renderedSvg)
-                }
+            
+            guard let parsed = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                throw VcRendererException(
+                    errorCode: VcRendererErrorCodes.invalidRenderMethod,
+                    message: "Invalid JSON input (not a dictionary)",
+                    className: String(describing: InjiVcRenderer.self),
+                    traceabilityId: traceabilityId
+                )
             }
-
-            return results
+            
+            return parsed
         } catch {
-            print("Error in renderSvg: \(error)")
-            return []
+            throw VcRendererException(
+                errorCode: VcRendererErrorCodes.invalidRenderMethod,
+                message: "Invalid JSON input (\(error.localizedDescription))",
+                className: String(describing: InjiVcRenderer.self),
+                traceabilityId: traceabilityId
+            )
         }
     }
-}
+   }
