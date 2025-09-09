@@ -4,7 +4,7 @@ import XCTest
 import XCTest
 
 // Mock NetworkHandler for testing
-class MockNetworkHandler: NetworkHandler {
+class MockNetworkManager: NetworkManager {
     override func fetchSvgAsText(url: String) -> String {
         switch url {
         case _ where url.contains("normal.svg"):
@@ -31,7 +31,7 @@ final class InjiVcRendererTests: XCTestCase {
     override func setUp() {
         super.setUp()
         // Inject the mock into SvgHelper
-        SvgHelper.networkHandler = MockNetworkHandler()
+        SvgHelper.networkHandler = MockNetworkManager()
         renderer = InjiVcRenderer()
     }
 

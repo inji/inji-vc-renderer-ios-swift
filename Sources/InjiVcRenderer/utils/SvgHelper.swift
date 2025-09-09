@@ -2,7 +2,7 @@ import Foundation
 
 class SvgHelper {
     // 👇 dependency injection point
-    static var networkHandler: NetworkHandlerProtocol = NetworkHandler() as NetworkHandlerProtocol
+    static var networkHandler: NetworkManagerProtocol = NetworkManager() as NetworkManagerProtocol
     static var qrCodeGenerator: QrCodeGeneratorProtocol = QrCodeGenerator() as QrCodeGeneratorProtocol
 
     static func extractSvgTemplate(renderMethod: [String: Any], vcJsonString: String) -> String {
@@ -50,7 +50,7 @@ class SvgHelper {
     }
 }
 
-protocol NetworkHandlerProtocol {
+protocol NetworkManagerProtocol {
     func fetchSvgAsText(url: String) -> String?
 }
 

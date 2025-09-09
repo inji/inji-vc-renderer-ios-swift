@@ -1,6 +1,6 @@
 import Foundation
 
-class NetworkHandler: NetworkHandlerProtocol {
+class NetworkManager: NetworkManagerProtocol {
     func fetchSvgAsText(url: String) -> String? {
         guard let url = URL(string: url) else { return nil }
         
