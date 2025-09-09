@@ -8,7 +8,7 @@ To include InjiVcRenderer in your Swift project:
 - Add package dependency: Enter Package URL of InjiVcRenderer repo
 
 ### API
-- `renderSvg(vcJsonString: String)` - expects the Verifiable Credential as parameter and returns the replaced SVG Template.
+- `renderVC(vcJsonString: String): [Any]` - expects the Verifiable Credential as parameter and returns the replaced SVG Template.
     - `vcJsonData` - VC Downloaded in stringified format.
 - This method takes entire VC data as input.
 - Example :
@@ -37,6 +37,35 @@ To include InjiVcRenderer in your Swift project:
 ```
 - Returns the Replaced svg template to render proper SVG Image. It returns the list of SVG Template if multiple render methods are present in the VC.
 
+## Package Structure
+
+```
+Sources
+├── InjiVcRenderer.swift              # Main library class with public API
+├── constants/         # Constants used across the library
+│   ├── Constants.swift   
+│   ├── NetworkConstants.swift      
+│   └── VcRendererErrorCodes.swift #Error codes used for Custom Exceptions              
+│   |
+├── exceptions/        # Exceptions
+│   ├── VcRendererExceptions.swift  # Centralized exception definitions
+│   │
+│── qrCode/          
+│   │   ├── QRCodeGenerator.swift  # QR code generation utility
+│── templateEngine/svg/        # Json Pointer Algorithm implementation
+    |--JsonPointerResolver.swift    
+├── utils      # Utility classes
+    ├── SVGHelper.kt               # SVG related utilities
+```
+
+###### Exceptions
+
+1. InvalidRenderSuiteException is thrown if render suite is not `svg-mustache`
+2. InvalidRenderMethodTypeException is thrown if render method type is not `TemplateRenderMethod`
+3. QRCodeGenerationFailureException is thrown if QR code generation fails
+4. MissingTemplateIdException is thrown if template id is missing in render method
+5. SvgFetchException is thrown if fetching SVG from the URL fails
+6. InvalidRenderMethodException is thrown if render method object is invalid
 
 ### Steps involved in SVG Template to SVG Image Conversion
 - Render Method Extraction from VC

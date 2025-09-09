@@ -13,9 +13,9 @@ public class InjiVcRenderer {
      Replaces placeholders in the templates with values from the VC JSON.
 
      - Parameter vcJsonString: The Verifiable Credential as a JSON string.
-     - Returns: A list of rendered SVG strings. Empty list if no valid render methods found or on error.
+     - Returns: A list of rendered SVG strings. Empty list if no valid render methods found or on error.  Return is List<Any> to accommodate future extensions.
      */
-    public func renderVC(vcJsonString: String) throws -> [String] {
+    public func renderVC(vcJsonString: String) throws -> [Any] {
         let vcJsonObject = try parseVcJson(vcJsonString: vcJsonString)
 
         let renderMethodArray = try SvgHelper.parseRenderMethod(vcJsonObject, traceabilityId: traceabilityId)

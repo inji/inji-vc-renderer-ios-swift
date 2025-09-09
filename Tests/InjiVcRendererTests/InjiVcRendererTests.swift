@@ -198,7 +198,8 @@ final class InjiVcRendererTests: XCTestCase {
             }
         }
         """
-        let result = try renderer.renderVC(vcJsonString: vcJson)
+        let resultAny = try renderer.renderVC(vcJsonString: vcJson)
+        let result = resultAny.compactMap { $0 as? String }
         XCTAssertEqual(result, [
             "<svg>Address : TEST_ADDRESS_LINE_1eng****TEST_REGIONeng****TEST_CITYeng***</svg>"
         ])
@@ -222,7 +223,8 @@ final class InjiVcRendererTests: XCTestCase {
             }
         }
         """
-        let result = try renderer.renderVC(vcJsonString: vcJsonString)
+        let resultAny = try renderer.renderVC(vcJsonString: vcJsonString)
+        let result = resultAny.compactMap { $0 as? String }
         XCTAssertEqual(result, ["<svg>Email: test@gmail.com, Mobile: 1234567890</svg>"])
     }
 
@@ -256,7 +258,8 @@ final class InjiVcRendererTests: XCTestCase {
             ]
         }
         """
-        let result = try renderer.renderVC(vcJsonString: vcJsonString)
+        let resultAny = try renderer.renderVC(vcJsonString: vcJsonString)
+        let result = resultAny.compactMap { $0 as? String }
         XCTAssertEqual(result, [
             "<svg>Email: test@gmail.com, Mobile: John Doe</svg>",
             "<svg>Full Name - John Doe,முழுப் பெயர் - ஜான் டோ</svg>"
@@ -285,7 +288,8 @@ final class InjiVcRendererTests: XCTestCase {
             }
         }
         """
-        let result = try renderer.renderVC(vcJsonString: vcJsonString)
+        let resultAny = try renderer.renderVC(vcJsonString: vcJsonString)
+        let result = resultAny.compactMap { $0 as? String }
         XCTAssertEqual(result, ["<svg>Email: test@test.com, Mobile: -</svg>"])
     }
 }
