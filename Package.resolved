@@ -1,5 +1,4 @@
 {
-  "originHash" : "b99018dd028b5e96750e91d3148609cd44a51922b300e6fce07f3ea33b7acc72",
   "pins" : [
     {
       "identity" : "base45-swift",
@@ -15,8 +14,26 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mosip/pixelpass-ios-swift.git",
       "state" : {
-        "revision" : "9e2da5077242b903f694e6300627c9c282ebba51",
-        "version" : "0.2.0"
+        "revision" : "78faea2ff48626ef9a6d198123bcf7b299acefd1",
+        "version" : "0.6.3"
+      }
+    },
+    {
+      "identity" : "swiftcbor",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/abhip2565/SwiftCBOR",
+      "state" : {
+        "revision" : "cc4e195a0ea2dce88f2fd6c6d73b2504e3c884fd",
+        "version" : "0.5.0"
+      }
+    },
+    {
+      "identity" : "zipfoundation",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/weichsel/ZIPFoundation.git",
+      "state" : {
+        "revision" : "02b6abe5f6eef7e3cbd5f247c5cc24e246efcfe0",
+        "version" : "0.9.19"
       }
     }
   ],
