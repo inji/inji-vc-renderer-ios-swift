@@ -11,14 +11,18 @@ final class JsonPointerResolver {
         pattern: #"\{\{(/[^}]*)\}\}|\{\{\}\}"#
     )
     public static let className = String(describing: JsonPointerResolver.self)
+    private static let FALLBACK_PATH = "/credential_definition/credentialSubject/"
+
 
 
     /// Replaces placeholders in an SVG template using a Verifiable Credential JSON.
     /// Supports optional whitelist of allowed placeholders.
     static func replacePlaceholders(svgTemplate: String,
-                                    vcJson: Any,
+                                    inputJson: Any,
                                     renderProperties: [String]? = nil,
-                                    traceabilityId: String) throws -> String {
+                                    traceabilityId: String,
+                                    isLabelPlaceholder: Bool = false
+    ) throws -> String {
         let nsRange = NSRange(svgTemplate.startIndex..<svgTemplate.endIndex,
                               in: svgTemplate)
         var result = svgTemplate
@@ -41,10 +45,10 @@ final class JsonPointerResolver {
 
             let value: Any?
             if pointerPath.isEmpty {
-                value = vcJson
+                value = inputJson
             } else {
                 do {
-                        value = try resolvePointer(root: vcJson, pointer: pointerPath)
+                        value = try resolvePointer(root: inputJson, pointer: pointerPath)
                     } catch JsonPointerError.notFound {
                         print("ERROR [\(VcRendererErrorCodes.missingJsonPath)] - Missing: \(pointerPath) | Class: \(className) | TraceabilityId: \(traceabilityId)")
                         value = nil
@@ -57,7 +61,15 @@ final class JsonPointerResolver {
             let replacement: String
             switch value {
             case nil:
-                replacement = "-"
+                if isLabelPlaceholder {
+                    if pointerPath.hasPrefix(FALLBACK_PATH) {
+                        replacement = extractFieldName(from: pointerPath)
+                    } else {
+                        replacement = matchString(svgTemplate, match.range)
+                    }
+                } else {
+                    replacement = "-"
+                }
             case let v as String:
                 replacement = v
             case let v as NSNumber:
@@ -100,6 +112,31 @@ final class JsonPointerResolver {
         }
         return current
     }
+    
+    private static func extractFieldName(from pointerPath: String) -> String {
+            let raw = pointerPath
+                .replacingOccurrences(of: FALLBACK_PATH, with: "")
+                .components(separatedBy: "/")
+                .first ?? ""
+
+            return raw
+                .replacingOccurrences(of: #"\[\d+\]"#, with: "", options: .regularExpression)
+                .replacingOccurrences(of: "([a-z])([A-Z])", with: "$1 $2", options: .regularExpression)
+                .replacingOccurrences(of: "([A-Z])([A-Z][a-z])", with: "$1 $2", options: .regularExpression)
+                .split { $0 == "_" || $0 == " " }
+                .map { word in
+                    word.prefix(1).uppercased() + word.dropFirst()
+                }
+                .joined(separator: " ")
+        }
+
+        private static func matchString(_ text: String, _ nsRange: NSRange) -> String {
+            if let range = Range(nsRange, in: text) {
+                return String(text[range])
+            }
+            return ""
+        }
+
 
     private static func jsonString(from value: Any) -> String? {
         guard JSONSerialization.isValidJSONObject(value) else { return nil }

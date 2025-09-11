@@ -84,3 +84,14 @@ class InvalidRenderMethodException: VcRendererException {
         )
     }
 }
+
+class UnsupportedCredentialFormat: VcRendererException {
+    init(traceabilityId: String, className: String?) {
+        super.init(
+            errorCode: VcRendererErrorCodes.unsupportedCredentialFormat,
+            message: "Only LDP_VC credential format is supported",
+            className: className ?? "",
+            traceabilityId: traceabilityId
+        )
+    }
+}

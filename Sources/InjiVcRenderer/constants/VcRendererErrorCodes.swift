@@ -7,4 +7,5 @@ struct VcRendererErrorCodes {
     static let missingJsonPath = "ERR_MISSING_JSON_PATH"
     static let svgFetchError = "ERR_SVG_FETCH"
     static let invalidRenderMethod = "ERR_INVALID_RENDER_METHOD"
+    static let unsupportedCredentialFormat = "ERR_UNSUPPORTED_CREDENTIAL_FORMAT"
 }
