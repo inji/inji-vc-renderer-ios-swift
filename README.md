@@ -8,8 +8,10 @@ To include InjiVcRenderer in your Swift project:
 - Add package dependency: Enter Package URL of InjiVcRenderer repo
 
 ### API
-- `renderVC(vcJsonString: String): [Any]` - expects the Verifiable Credential as parameter and returns the replaced SVG Template.
-    - `vcJsonData` - VC Downloaded in stringified format.
+- `renderVC(credentialFormat: CredentialFormat, wellKnownJson: String? = nil, vcJsonString: String): [Any]` - expects the Verifiable Credential as parameter and returns the replaced SVG Template.
+    - `vcJsonString` - VC Downloaded in stringified format.
+    - `wellKnownJson` - Well-known Json downloaded in stringified format. It is optional parameter.
+    - `credentialFormat` - Enum to specify the credential format. Currently only LDP_VC format is supported.
 - This method takes entire VC data as input.
 - Example :
 ```
@@ -55,7 +57,9 @@ Sources
 │── templateEngine/svg/        # Json Pointer Algorithm implementation
     |--JsonPointerResolver.swift    
 ├── utils      # Utility classes
-    ├── SVGHelper.kt               # SVG related utilities
+|    ├── Utils.kt               # SVG related utilities
+├── networkManager      
+|   ├── NetworkManager.kt       # Network related utilities
 ```
 
 ###### Exceptions
@@ -155,6 +159,18 @@ Sources
       //result => <svg>Tester - TestCITY</svg>
   ```
 
+##### Wellknown fallback handling
+- If placeholder for label is present in the SVG Template and concern path is not available in well-known or well-known itself not available, it will check for `/credential_definition/credentialSubject` in th placeholder and takes the path next to that as the value to replace it.
+- Example:
+    ```
+    //Well-known is not available
+    let vcJson = {      "credentialSubject": { "fullName": "Tester", "city": [{"value": "TestCITY", "language": "eng"},{"value": "VilleTest", "language": "fr"}]}
+          
+      let svgTempalte = "<svg>{{/credential_definition/credentialSubject/fullName}} - {{/credentialSubject/fullName/0/value}}</svg>"
+          
+      //result => <svg>Full Name - Tester</svg>
+  ```
+Note: camelCase, PascalCase or snake_case value is converted to Title Case for the label. e.g. fullName or FullName or full_name is converted to Full Name.
 
 #### Replacing Placeholders in SVG Template
 - Replaces the placeholders in the SVG Template with actual VC Json Data strictly follows JSON Pointer Algorithm RFC6901.
