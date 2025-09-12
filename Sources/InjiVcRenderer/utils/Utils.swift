@@ -1,4 +1,6 @@
 import Foundation
+import CryptoKit
+
 class Utils {
     static var networkHandler: NetworkManagerProtocol = NetworkManager() as NetworkManagerProtocol
     static var qrCodeGenerator: QrCodeGeneratorProtocol = QrCodeGenerator() as QrCodeGeneratorProtocol
@@ -29,6 +31,15 @@ class Utils {
            } catch {
                throw SvgFetchException(traceabilityId: traceabilityId, className: className, exceptionMessage: error.localizedDescription)
            }
+        let digestMultibase = templateValue[Constants.DIGEST_MULTIBASE] as? String
+        if let digestMultibase = digestMultibase,
+           try !validateDigestMultibase(traceabilityId: traceabilityId, svgString: rawSvg, digestMultibase: digestMultibase) {
+            throw MultibaseValidationException(
+                traceabilityId: traceabilityId,
+                className: String(describing: Self.self),
+                exceptionMessage: "Mismatch between fetched SVG and provided digestMultibase"
+            )
+        }
 
         rawSvg = try injectQrCodeIfNeeded(svg: rawSvg, vcJsonString: vcJsonString, traceabilityId: traceabilityId)
         return rawSvg
@@ -92,6 +103,43 @@ class Utils {
         } else {
             throw InvalidRenderMethodException(traceabilityId: traceabilityId, className: className)
         }
+    }
+    
+    static func validateDigestMultibase(traceabilityId: String, svgString: String, digestMultibase: String) throws -> Bool {
+        guard digestMultibase.hasPrefix("u") else {
+            throw MultibaseValidationException(traceabilityId: traceabilityId, className: className,  exceptionMessage: "digestMultibase must start with 'u'")
+        }
+        
+        let encodedPart = String(digestMultibase.dropFirst())
+        guard let decoded = base64UrlNoPadDecode(encodedPart) else {
+            throw MultibaseValidationException(traceabilityId: traceabilityId, className: className,  exceptionMessage: "Base64 Decoding error")
+        }
+        
+        guard decoded.count == 34 else {
+            throw MultibaseValidationException(traceabilityId: traceabilityId, className: className,  exceptionMessage: "Invalid multihash length")
+        }
+        
+        guard decoded[0] == 0x12 && decoded[1] == 0x20 else {
+            throw MultibaseValidationException(traceabilityId: traceabilityId, className: className,  exceptionMessage: "Unsupported multihash prefix")
+        }
+        
+        let expectedHash = decoded.subdata(in: 2..<34)
+        let actualHash = Data(SHA256.hash(data: Data(svgString.utf8)))
+        
+        return expectedHash == actualHash
+    }
+    
+    private static func base64UrlNoPadDecode(_ string: String) -> Data? {
+        var base64 = string
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        
+        let padding = 4 - (base64.count % 4)
+        if padding < 4 {
+            base64.append(String(repeating: "=", count: padding))
+        }
+        
+        return Data(base64Encoded: base64)
     }
 }
 

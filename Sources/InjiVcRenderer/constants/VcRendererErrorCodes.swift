@@ -8,4 +8,5 @@ struct VcRendererErrorCodes {
     static let svgFetchError = "ERR_SVG_FETCH"
     static let invalidRenderMethod = "ERR_INVALID_RENDER_METHOD"
     static let unsupportedCredentialFormat = "ERR_UNSUPPORTED_CREDENTIAL_FORMAT"
+    static let multibaseValidationFailed = "ERR_MULTIBASE_VALIDATION_FAILED"
 }

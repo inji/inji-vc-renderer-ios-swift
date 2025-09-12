@@ -1,7 +1,6 @@
 import XCTest
 
 @testable import InjiVcRenderer
-import XCTest
 
 // Mock NetworkHandler for testing
 class MockNetworkManager: NetworkManager {
@@ -24,6 +23,8 @@ class MockNetworkManager: NetworkManager {
             "{{/credential_definition/credentialSubject/fullName/display/0/name}}: {{/credentialSubject/fullName/0/value}}," +
             "{{/credential_definition/credentialSubject/fullName/display/1/name}}: {{/credentialSubject/fullName/1/value}}" +
             "</svg>"
+        case _ where url.contains("test-digest.svg"):
+            return "<svg>Email: {{/credentialSubject/email}}, Mobile: {{/credentialSubject/mobile}}</svg>"
         default:
             return "<svg>default</svg>"
         }
@@ -37,7 +38,6 @@ final class InjiVcRendererTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        // Inject the mock into Utils
         Utils.networkHandler = MockNetworkManager()
         renderer = InjiVcRenderer(traceabilityId: traceabilityId)
     }
@@ -72,8 +72,7 @@ final class InjiVcRendererTests: XCTestCase {
                 "renderSuite": "svg-mustache",
                 "template": {
                     "id": "https://degree.example/credential-templates/normal.svg",
-                    "mediaType": "image/svg+xml",
-                    "digestMultibase": "xyz"
+                    "mediaType": "image/svg+xml"
                 }
             }
         }
@@ -233,8 +232,7 @@ final class InjiVcRendererTests: XCTestCase {
                 "renderSuite": "svg-mustache",
                 "template": {
                     "id": "https://degree.example/credential-templates/nested-object.svg",
-                    "mediaType": "image/svg+xml",
-                    "digestMultibase": "xyz"
+                    "mediaType": "image/svg+xml"
                 }
             }
         }
@@ -258,8 +256,7 @@ final class InjiVcRendererTests: XCTestCase {
                 "renderSuite": "svg-mustache",
                 "template": {
                     "id": "https://degree.example/credential-templates/normal.svg",
-                    "mediaType": "image/svg+xml",
-                    "digestMultibase": "xyz"
+                    "mediaType": "image/svg+xml"
                 }
             }
         }
@@ -283,8 +280,7 @@ final class InjiVcRendererTests: XCTestCase {
                     "renderSuite": "svg-mustache",
                     "template": {
                         "id": "https://degree.example/credential-templates/normal.svg",
-                        "mediaType": "image/svg+xml",
-                        "digestMultibase": "xyz"
+                        "mediaType": "image/svg+xml"
                     }
                 },
                 {
@@ -292,8 +288,7 @@ final class InjiVcRendererTests: XCTestCase {
                     "renderSuite": "svg-mustache",
                     "template": {
                         "id": "https://degree.example/credential-templates/with-locale-object.svg",
-                        "mediaType": "image/svg+xml",
-                        "digestMultibase": "xyz"
+                        "mediaType": "image/svg+xml"
                     }
                 }
             ]
@@ -323,7 +318,6 @@ final class InjiVcRendererTests: XCTestCase {
                 "template": {
                     "id": "https://degree.example/credential-templates/normal.svg",
                     "mediaType": "image/svg+xml",
-                    "digestMultibase": "xyz",
                     "renderProperty": [ "/issuer", "/credentialSubject/email", "/credentialSubject/degree/name" ]
                 }
             }
@@ -355,8 +349,7 @@ final class InjiVcRendererTests: XCTestCase {
                 "renderSuite": "svg-mustache",
                   "template": {
                     "id": "https://degree.example/credential-templates/multilingual.svg",
-                    "mediaType": "image/svg+xml",
-                    "digestMultibase": "zQmerWC85Wg6wFl9znFCwYxApG270iEu5h6JqWAPdhyxz2dR"
+                    "mediaType": "image/svg+xml"
                   }
               }
           }
@@ -415,8 +408,7 @@ final class InjiVcRendererTests: XCTestCase {
                 "renderSuite": "svg-mustache",
                   "template": {
                     "id": "https://degree.example/credential-templates/multilingual.svg",
-                    "mediaType": "image/svg+xml",
-                    "digestMultibase": "zQmerWC85Wg6wFl9znFCwYxApG270iEu5h6JqWAPdhyxz2dR"
+                    "mediaType": "image/svg+xml"
                   }
               }
           }
@@ -430,5 +422,84 @@ final class InjiVcRendererTests: XCTestCase {
                                 "Full Name: ஜான் டோ" +
                                 "</svg>"])
     }
+    
+    func testDigestMultibaseValid() throws {
+        let vcJsonString = """
+          {
+             "credentialSubject": {
+                 "email": "test@test.com",
+                 "mobile": "1234567890"
+             },
+             "renderMethod": {
+                 "type": "TemplateRenderMethod",
+                 "renderSuite": "svg-mustache",
+                   "template": {
+                     "id": "https://degree.example/credential-templates/test-digest.svg",
+                     "mediaType": "image/svg+xml",
+                     "digestMultibase": "uEiCi0x0IkXhQiFxa2wdnrJL02byQYoLKjN4o9_jHxh1shw"
+                   }
+               }
+           }
+        """
+        
+    
+        let resultAny = try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)
+        let result = resultAny.compactMap { $0 as? String }
+        XCTAssertEqual(result, ["<svg>Email: test@test.com, Mobile: 1234567890</svg>"])
+    }
+    
+    func testDigestMultibaseInvalid() throws {
+        let vcJsonString = """
+          {
+             "credentialSubject": {
+                 "email": "test@test.com",
+                 "mobile": "1234567890"
+             },
+             "renderMethod": {
+                 "type": "TemplateRenderMethod",
+                 "renderSuite": "svg-mustache",
+                   "template": {
+                     "id": "https://degree.example/credential-templates/test-digest.svg",
+                     "mediaType": "image/svg+xml",
+                     "digestMultibase": "uEiDc1-CXqeAP2klpU-FcUFH5etlFW2Za-aOyY221sRfcug"
+                   }
+               }
+           }
+        """
+        XCTAssertThrowsError(try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
+            assertVcRendererException(error,
+                       expectedMessage: "Multibase validation failed: Mismatch between fetched SVG and provided digestMultibase",
+                                      expectedCode: VcRendererErrorCodes.multibaseValidationFailed
+                   )
+        }
+    }
+    
+    func testDigestMultibaseInvalid_prefix() throws {
+        let vcJsonString = """
+          {
+             "credentialSubject": {
+                 "email": "test@test.com",
+                 "mobile": "1234567890"
+             },
+             "renderMethod": {
+                 "type": "TemplateRenderMethod",
+                 "renderSuite": "svg-mustache",
+                   "template": {
+                     "id": "https://degree.example/credential-templates/test-digest.svg",
+                     "mediaType": "image/svg+xml",
+                     "digestMultibase": "zEiDc1-CXqeAP2klpU-FcUFH5etlFW2Za-aOyY221sRfcug"
+                   }
+               }
+           }
+        """
+        XCTAssertThrowsError(try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
+            assertVcRendererException(error,
+                       expectedMessage: "Multibase validation failed: digestMultibase must start with 'u'",
+                                      expectedCode: VcRendererErrorCodes.multibaseValidationFailed
+                   )
+        }
+    }
+    
+    
 }
 
