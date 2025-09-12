@@ -95,3 +95,14 @@ class UnsupportedCredentialFormat: VcRendererException {
         )
     }
 }
+
+class MultibaseValidationException: VcRendererException {
+    init(traceabilityId: String, className: String?, exceptionMessage: String) {
+        super.init(
+            errorCode: VcRendererErrorCodes.multibaseValidationFailed,
+            message: "Multibase validation failed: \(exceptionMessage)",
+            className: className ?? "",
+            traceabilityId: traceabilityId
+        )
+    }
+}
