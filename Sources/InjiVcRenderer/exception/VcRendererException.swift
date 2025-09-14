@@ -1,8 +1,10 @@
-class VcRendererException: Error, CustomStringConvertible {
-    let errorCode: String
-    let message: String
-    let className: String
-    let traceabilityId: String
+import Foundation
+
+public class VcRendererException: Error, CustomStringConvertible, LocalizedError {
+    public let errorCode: String
+    public let message: String
+    public let className: String
+    private let traceabilityId: String
 
     init(errorCode: String, message: String, className: String, traceabilityId: String) {
         self.errorCode = errorCode
@@ -14,8 +16,12 @@ class VcRendererException: Error, CustomStringConvertible {
         print("ERROR [\(errorCode)] - \(message) | Class: \(className) | TraceabilityId: \(traceabilityId)")
     }
 
-    var description: String {
+    public var description: String {
         return "\(errorCode) : \(message)"
+    }
+
+    public var errorDescription: String? {
+        return message
     }
 }
 
