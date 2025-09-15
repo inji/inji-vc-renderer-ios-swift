@@ -25,6 +25,9 @@ struct Constants {
     static let POSTAL_CODE = "postalCode"
 
     static let QR_CODE_PLACEHOLDER = "{{/qrCodeImage}}"
+    static let QR_CODE_IMAGE_ID = "qrCodeImage"
+    static let QR_CODE_FALLBACK_IMAGE_ID = "qrCodeFallbackImage"
+
     static let QR_IMAGE_PREFIX = "data:image/png;base64"
     static let CONCATENATED_ADDRESS = "concatenatedAddress"
     static let CONCATENATED_ADDRESS_PLACEHOLDER = "{{/concatenatedAddress}}"

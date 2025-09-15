@@ -49,21 +49,36 @@ class Utils {
         svg: String,
         vcJsonString: String,
         traceabilityId: String
-    ) throws -> String {
+    ) -> String {
         guard svg.contains(Constants.QR_CODE_PLACEHOLDER) else {
             return svg
         }
 
+        let qrBase64: String?
         do {
-            let qrBase64 = try qrCodeGenerator.generateQRCodeImage(vcJson: vcJsonString, traceabilityId: traceabilityId)
-            let qrImageTag = "\(Constants.QR_IMAGE_PREFIX),\(qrBase64)"
-            return svg.replacingOccurrences(of: Constants.QR_CODE_PLACEHOLDER, with: qrImageTag)
+            qrBase64 = try qrCodeGenerator.generateQRCodeImage(
+                vcJson: vcJsonString,
+                traceabilityId: traceabilityId
+            )
         } catch {
-            let fallbackBase64 = Constants.FALLBACK_QR_CODE
-            let qrImageTag = "\(Constants.QR_IMAGE_PREFIX),\(fallbackBase64)"
-            return svg.replacingOccurrences(of: Constants.QR_CODE_PLACEHOLDER, with: qrImageTag)
+            qrBase64 = nil
         }
+
+        let (finalQrBase64, imageId): (String, String) = {
+            if let qr = qrBase64, !qr.isEmpty {
+                return (qr, Constants.QR_CODE_IMAGE_ID)
+            } else {
+                return (Constants.FALLBACK_QR_CODE, Constants.QR_CODE_FALLBACK_IMAGE_ID)
+            }
+        }()
+
+        let qrImageTag = "\(Constants.QR_IMAGE_PREFIX),\(finalQrBase64)"
+
+        return svg
+            .replacingOccurrences(of: Constants.QR_CODE_PLACEHOLDER, with: qrImageTag)
+            .replacingOccurrences(of: Constants.QR_CODE_IMAGE_ID, with: imageId)
     }
+
 
 
     /// Ensures render suite is SVG Mustache
