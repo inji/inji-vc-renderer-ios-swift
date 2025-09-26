@@ -3,7 +3,6 @@ import InjiVcRenderer
 import UniformTypeIdentifiers
 
 struct ContentView: View {
-    @State private var renderedPdfUrl: URL?
     private let renderer = InjiVcRenderer(traceabilityId: "sample-app")
     
     // Example VC JSON string
@@ -13,7 +12,7 @@ struct ContentView: View {
                              {
                                "template": {
                                  "mediaType": "image/svg+xml",
-                                 "id": "https://svgrender.loca.lt/templates/sample.xml"
+                                 "id": "https://<local-host>/templates/sample.xml"
                                },
                                "renderSuite": "svg-mustache",
                                "type": "TemplateRenderMethod"
@@ -91,20 +90,7 @@ struct ContentView: View {
                             wellKnownJson: nil,
                             vcJsonString: testVc
                         ).compactMap { $0 as? String }
-                        
-                        // Convert SVGs -> PDF (async)
-                        if let base64Pdf = await renderer.convertSvgToPdf(svgList),
-                           let pdfData = Data(base64Encoded: base64Pdf) {
-                            
-                            // Save to temp file
-                            let tempUrl = FileManager.default.temporaryDirectory
-                                .appendingPathComponent("rendered.pdf")
-                            try pdfData.write(to: tempUrl)
-                            renderedPdfUrl = tempUrl
-                            print("✅ Saved PDF to: \(tempUrl.path)")
-                        } else {
-                            print("⚠️ Failed to generate PDF")
-                        }
+                        print("Replaced Template::::::")
                     } catch {
                         print("❌ Error rendering VC: \(error)")
                     }
@@ -115,25 +101,6 @@ struct ContentView: View {
             .foregroundColor(.white)
             .cornerRadius(10)
             
-            Button("Share PDF") {
-                if let url = renderedPdfUrl {
-                    sharePdf(url: url)
-                }
-            }
-            .padding()
-            .background(Color.green)
-            .foregroundColor(.white)
-            .cornerRadius(10)
-            .disabled(renderedPdfUrl == nil)
-        }
-        .padding()
-    }
-    
-    private func sharePdf(url: URL) {
-        let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootVC = windowScene.windows.first?.rootViewController {
-            rootVC.present(activityVC, animated: true)
         }
     }
 }
