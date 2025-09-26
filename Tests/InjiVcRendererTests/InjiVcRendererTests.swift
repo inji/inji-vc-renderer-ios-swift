@@ -25,6 +25,11 @@ class MockNetworkManager: NetworkManager {
             "</svg>")
         case _ where url.contains("test-digest.svg"):
             return TemplateResponse(contentType: .svg, body:"<svg>Email: {{/credentialSubject/email}}, Mobile: {{/credentialSubject/mobile}}</svg>")
+        case _ where url.contains("xml-valid-with-2-pages.xml"):
+            return TemplateResponse(contentType: .xml, body:"<pageSet>" +
+                                    "<page><svg>Email: {{/credentialSubject/email}}</svg></page>" +
+                                    "<page><svg>Mobile: {{/credentialSubject/mobile}}</svg></page>" +
+                                    "</pageSet>")
         default:
             return TemplateResponse(contentType: .svg, body:"<svg>default</svg>")
         }
@@ -403,6 +408,37 @@ final class InjiVcRendererTests: XCTestCase {
                                       expectedCode: VcRendererErrorCodes.multibaseValidationFailed
                    )
         }
+    }
+    
+    func test_Xml_PageSet_Supported() throws {
+        let vcJsonString = """
+        {
+          "credentialSubject": {
+            "email": "test@test.com",
+            "mobile": "1234567890"
+          },
+          "renderMethod": {
+            "type": "TemplateRenderMethod",
+            "renderSuite": "svg-mustache",
+            "template": {
+              "id": "xml-valid-with-2-pages.xml",
+              "mediaType": "application/xml"
+            }
+          }
+        }
+        """
+        let resultAny = try renderer.renderVC(
+            credentialFormat: CredentialFormat.fromValue("ldp_vc"),
+            vcJsonString: vcJsonString
+        )
+        let result = resultAny.compactMap { $0 as? String }
+
+        let normalized = result.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+        XCTAssertEqual(normalized, [
+            "<svg>Email: test@test.com</svg>",
+            "<svg>Mobile: 1234567890</svg>"
+        ])
     }
     
     
