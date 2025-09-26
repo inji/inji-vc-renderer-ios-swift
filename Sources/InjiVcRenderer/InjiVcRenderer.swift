@@ -14,7 +14,7 @@ public class InjiVcRenderer {
 
      - Parameter
        credentialFormat The format of the credential. Currently only LDP_VC is supported.
-       wellKnownJson: Optional well-known JSON for additional placeholders for labels.
+       wellKnownJson: Optional well-known JSON.
        vcJsonString: The Verifiable Credential as a JSON string.
         
                  

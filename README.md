@@ -46,20 +46,27 @@ Sources
 ├── InjiVcRenderer.swift              # Main library class with public API
 ├── constants/         # Constants used across the library
 │   ├── Constants.swift   
+│   ├── ContentType.swift   
+│   ├── CredentialFormat.swift   
 │   ├── NetworkConstants.swift      
 │   └── VcRendererErrorCodes.swift #Error codes used for Custom Exceptions              
-│   |
+│   
 ├── exceptions/        # Exceptions
 │   ├── VcRendererExceptions.swift  # Centralized exception definitions
-│   │
+│   
 │── qrCode/          
 │   │   ├── QRCodeGenerator.swift  # QR code generation utility
 │── templateEngine/svg/        # Json Pointer Algorithm implementation
     |--JsonPointerResolver.swift    
 ├── utils      # Utility classes
-|    ├── Utils.kt               # SVG related utilities
+|   ├── DigestMultibaseHelper.kt               
+│   ├── PlaceholderReplacementHelper.swift   
+│   ├── RenderMethodHelper.swift      
+│   ├── TemplateHelper.swift      
+│   └── XMLHelper.swift
 ├── networkManager      
 |   ├── NetworkManager.kt       # Network related utilities
+|   ├── TemplateResponse.kt      
 ```
 
 ###### Exceptions
@@ -70,6 +77,10 @@ Sources
 4. MissingTemplateIdException is thrown if template id is missing in render method
 5. SvgFetchException is thrown if fetching SVG from the URL fails
 6. InvalidRenderMethodException is thrown if render method object is invalid
+7. UnsupportedCredentialFormat is thrown if credential format other than ldpVc is passed to the renderVC method
+8. MultibaseValidationException is thrown if digestMultibase validation fails
+
+
 
 ### Steps involved in SVG Template to SVG Image Conversion
 - Render Method Extraction from VC
@@ -158,19 +169,6 @@ Sources
           
       //result => <svg>Tester - TestCITY</svg>
   ```
-
-##### Wellknown fallback handling
-- If placeholder for label is present in the SVG Template and concern path is not available in well-known or well-known itself not available, it will check for `/credential_definition/credentialSubject` in th placeholder and takes the path next to that as the value to replace it.
-- Example:
-    ```
-    //Well-known is not available
-    let vcJson = {      "credentialSubject": { "fullName": "Tester", "city": [{"value": "TestCITY", "language": "eng"},{"value": "VilleTest", "language": "fr"}]}
-          
-      let svgTempalte = "<svg>{{/credential_definition/credentialSubject/fullName}} - {{/credentialSubject/fullName/0/value}}</svg>"
-          
-      //result => <svg>Full Name - Tester</svg>
-  ```
-Note: camelCase, PascalCase or snake_case value is converted to Title Case for the label. e.g. fullName or FullName or full_name is converted to Full Name.
 
 ##### Digest Multibase Validation
 - If the `digestMultibase` field is present in the `template` object, it will validate the downloaded SVG Template using the digestMultibase value.

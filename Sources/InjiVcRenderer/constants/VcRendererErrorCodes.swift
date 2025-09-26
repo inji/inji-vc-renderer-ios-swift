@@ -10,4 +10,5 @@ struct VcRendererErrorCodes {
     static let invalidVcJson = "ERR_INVALID_VC_JSON"
     static let unsupportedCredentialFormat = "ERR_UNSUPPORTED_CREDENTIAL_FORMAT"
     static let multibaseValidationFailed = "ERR_MULTIBASE_VALIDATION_FAILED"
+    static let xmlParsingFailed = "ERR_XML_PARSING_FAILED"
 }

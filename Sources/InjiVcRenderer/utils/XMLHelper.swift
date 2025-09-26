@@ -1,10 +1,6 @@
 import Foundation
 import AEXML
 
-enum VcRendererExceptions: Error {
-    case pageSetParsingException(traceabilityId: String, className: String, message: String)
-}
-
 public class XMLHelper {
     private let traceabilityId: String
 
@@ -20,10 +16,10 @@ public class XMLHelper {
             try validatePageSetRoot(document: document)
             
             guard let pages = document.root["page"].all, !pages.isEmpty else {
-                throw VcRendererExceptions.pageSetParsingException(
+                throw PageSetParsingException(
                     traceabilityId: traceabilityId,
                     className: String(describing: type(of: self)),
-                    message: "<pageSet> must contain at least one <page> element"
+                    exceptionMessage: "<pageSet> must contain at least one <page> element"
                 )
             }
 
@@ -36,23 +32,23 @@ public class XMLHelper {
 
             return svgList
 
-        } catch let error as VcRendererExceptions {
+        } catch let error as VcRendererException {
             throw error
         } catch {
-            throw VcRendererExceptions.pageSetParsingException(
+            throw PageSetParsingException(
                 traceabilityId: traceabilityId,
                 className: String(describing: type(of: self)),
-                message: error.localizedDescription
+                exceptionMessage: error.localizedDescription
             )
         }
     }
 
     private func validatePageSetRoot(document: AEXMLDocument) throws {
         if document.root.name.caseInsensitiveCompare("pageSet") != .orderedSame {
-            throw VcRendererExceptions.pageSetParsingException(
+            throw PageSetParsingException(
                 traceabilityId: traceabilityId,
                 className: String(describing: type(of: self)),
-                message: "Root element must be <PageSet>"
+                exceptionMessage: "Root element must be <PageSet>"
             )
         }
     }
