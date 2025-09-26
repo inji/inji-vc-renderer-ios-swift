@@ -212,75 +212,7 @@ final class JsonPointerResolverTests: XCTestCase {
 
        XCTAssertEqual(result, expected)
     }
+
     
-    func testReplaceLabelPlaceholders() throws {
-        let template = "<svg >{{/credential_definition/credentialSubject/fullName/display/0/name}}:{{/credentialSubject/fullName}}</svg>"
-        let wellKnownJson: [String: Any] = [
-            "credential_definition": [
-                "type": [
-                    "FarmerCredential_WithFace",
-                    "VerifiableCredential"
-                ],
-                "credentialSubject": [
-                    "fullName": [
-                        "display": [
-                            [
-                                "language": "eng",
-                                "name": "Full Name"
-                            ],
-                            [
-                                "language": "tam",
-                                "name": "முழுப் பெயர்"
-                            ]
-                        ]
-                    ],
-                    "gender": [
-                        "display": [
-                            [
-                                "language": "eng",
-                                "name": "Gender"
-                            ],
-                            [
-                                "language": "tam",
-                                "name": "பாலினம்"
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
 
-        let expected = "<svg >Full Name:{{/credentialSubject/fullName}}</svg>"
-        
-        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, inputJson : wellKnownJson, traceabilityId: traceabilityId, isLabelPlaceholder: true)
-
-       XCTAssertEqual(result, expected)
-    }
-    
-    func testReplaceLabelPlaceholders_fallback_camelCase() throws {
-        let template = "<svg >{{/credential_definition/credentialSubject/addressLine/display/0/name}}:{{/credentialSubject/addressLine}}</svg>"
-        let wellKnownJson: [String: Any] = [:]
-        let expected = "<svg >Address Line:{{/credentialSubject/addressLine}}</svg>"
-        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, inputJson : wellKnownJson, traceabilityId: traceabilityId, isLabelPlaceholder: true)
-
-       XCTAssertEqual(result, expected)
-    }
-    
-    func testReplaceLabelPlaceholders_fallback_PascalCase() throws {
-        let template = "<svg >{{/credential_definition/credentialSubject/AddressLine/display/0/name}}:{{/credentialSubject/addressLine}}</svg>"
-        let wellKnownJson: [String: Any] = [:]
-        let expected = "<svg >Address Line:{{/credentialSubject/addressLine}}</svg>"
-        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, inputJson : wellKnownJson, traceabilityId: traceabilityId, isLabelPlaceholder: true)
-
-       XCTAssertEqual(result, expected)
-    }
-    
-    func testReplaceLabelPlaceholders_fallback_snake_case() throws {
-        let template = "<svg >{{/credential_definition/credentialSubject/address_line/display/0/name}}:{{/credentialSubject/addressLine}}</svg>"
-        let wellKnownJson: [String: Any] = [:]
-        let expected = "<svg >Address Line:{{/credentialSubject/addressLine}}</svg>"
-        let result = try JsonPointerResolver.replacePlaceholders(svgTemplate: template, inputJson : wellKnownJson, traceabilityId: traceabilityId, isLabelPlaceholder: true)
-
-       XCTAssertEqual(result, expected)
-    }
 }

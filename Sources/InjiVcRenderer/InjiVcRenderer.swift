@@ -28,81 +28,27 @@ public class InjiVcRenderer {
                 className: String(describing: InjiVcRenderer.self)
             )
         }
-        
-        
-        var wellKnownJsonObject: [String: Any] = [:]
-        
-        if let wellKnownJson = wellKnownJson,
-           let wkData = wellKnownJson.data(using: .utf8),
-           let wkNode = try? JSONSerialization.jsonObject(with: wkData) as? [String: Any] {
-            wellKnownJsonObject = wkNode
-        }
-        
-        
+        let renderMethodHelper = RenderMethodHelper(traceabilityId: traceabilityId)
 
-        let vcJsonObject = try parseVcJson(vcJsonString: vcJsonString)
-
-        let renderMethodArray = try Utils.parseRenderMethod(vcJsonObject, traceabilityId: traceabilityId)
+        let vcJsonObject = try renderMethodHelper.parseVcJson(vcJsonString: vcJsonString)
+        let renderMethodArray = try renderMethodHelper.parseRenderMethod(vcJsonObject)
         
-        var results: [String] = []
+        
+        return try renderMethodArray.flatMap { renderMethodElement -> [String] in
+            let svgList = try TemplateHelper(traceabilityId: traceabilityId).extractSVG(
+                        renderMethod: renderMethodElement,
+                        vcJsonString: vcJsonString
+                    )
 
-        for case let renderMethod in renderMethodArray {
-            var svgTemplate = try Utils.extractSvgTemplate(renderMethod: renderMethod, vcJsonString: vcJsonString, traceabilityId: traceabilityId)
-                   
-                    //// Replace label placeholders first (using well-known JSON)
-                     svgTemplate = try JsonPointerResolver.replacePlaceholders(
-                         svgTemplate: svgTemplate,
-                         inputJson: wellKnownJsonObject,
-                         traceabilityId: traceabilityId,
-                         isLabelPlaceholder: true
-                     )
-            
-            
-                    //// Replace value placeholders using Vc Json
-            
-                   let renderProperties = (renderMethod[Constants.TEMPLATE] as? [String: Any])?[Constants.RENDER_PROPERTY] as? [String]
-                   
-                   let renderedSvg = try JsonPointerResolver.replacePlaceholders(
-                       svgTemplate: svgTemplate,
-                       inputJson: vcJsonObject,
-                       renderProperties: renderProperties,
-                       traceabilityId: traceabilityId
-                   )
-                   
-                   results.append(renderedSvg)
-               }
-               
-               return results
+                    return try svgList.map { rawSvg in
+                        try PlaceholderReplacementHelper(traceabilityId: traceabilityId).replaceSvgPlaceholders(
+                            svgTemplate: rawSvg,
+                            vcJson: vcJsonObject,
+                            renderMethodElement: renderMethodElement,
+                            vcJsonString: vcJsonString
+                        )
+                    }
+                }
        }
     
-    private func parseVcJson(vcJsonString: String) throws -> [String: Any] {
-        do {
-            guard let data = vcJsonString.data(using: .utf8) else {
-                throw VcRendererException(
-                    errorCode: VcRendererErrorCodes.invalidRenderMethod,
-                    message: "Invalid JSON input (data encoding failed)",
-                    className: String(describing: InjiVcRenderer.self),
-                    traceabilityId: traceabilityId
-                )
-            }
-            
-            guard let parsed = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                throw VcRendererException(
-                    errorCode: VcRendererErrorCodes.invalidRenderMethod,
-                    message: "Invalid JSON input (not a dictionary)",
-                    className: String(describing: InjiVcRenderer.self),
-                    traceabilityId: traceabilityId
-                )
-            }
-            
-            return parsed
-        } catch {
-            throw VcRendererException(
-                errorCode: VcRendererErrorCodes.invalidRenderMethod,
-                message: "Invalid JSON input (\(error.localizedDescription))",
-                className: String(describing: InjiVcRenderer.self),
-                traceabilityId: traceabilityId
-            )
-        }
-    }
    }

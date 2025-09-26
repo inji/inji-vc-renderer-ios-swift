@@ -4,29 +4,29 @@ import XCTest
 
 // Mock NetworkHandler for testing
 class MockNetworkManager: NetworkManager {
-    override func fetchSvgAsText(url: String, traceabilityId: String) -> String {
+    override func fetch(url: String, traceabilityId: String) -> TemplateResponse {
         switch url {
         case _ where url.contains("normal.svg"):
-            return "<svg>Email: {{/credentialSubject/email}}, Mobile: {{/credentialSubject/mobile}}</svg>"
+            return TemplateResponse(contentType: .svg, body: "<svg>Email: {{/credentialSubject/email}}, Mobile: {{/credentialSubject/mobile}}</svg>")
         case _ where url.contains("arrays.svg"):
-            return "<svg>Benefits: {{/credentialSubject/benefits/0}}, {{/credentialSubject/benefits/1}}</svg>"
+            return TemplateResponse(contentType: .svg, body:"<svg>Benefits: {{/credentialSubject/benefits/0}}, {{/credentialSubject/benefits/1}}</svg>")
         case _ where url.contains("with-locale-object.svg"):
-            return "<svg>Full Name - {{/credentialSubject/fullName/en}},முழுப் பெயர் - {{/credentialSubject/fullName/tam}}</svg>"
+            return TemplateResponse(contentType: .svg, body:"<svg>Full Name - {{/credentialSubject/fullName/en}},முழுப் பெயர் - {{/credentialSubject/fullName/tam}}</svg>")
         case _ where url.contains("with-locale-as-array-of-object.svg"):
-            return "<svg>Full Name - {{/credentialSubject/fullName/0/value}},முழுப் பெயர் - {{/credentialSubject/fullName/1/value}}</svg>"
+            return TemplateResponse(contentType: .svg, body:"<svg>Full Name - {{/credentialSubject/fullName/0/value}},முழுப் பெயர் - {{/credentialSubject/fullName/1/value}}</svg>")
         case _ where url.contains("nested-object.svg"):
-            return "<svg>Address : {{/credentialSubject/addressLine1/0/value}}****{{/credentialSubject/region/0/value}}****{{/credentialSubject/city/0/value}}***</svg>"
+            return TemplateResponse(contentType: .svg, body:"<svg>Address : {{/credentialSubject/addressLine1/0/value}}****{{/credentialSubject/region/0/value}}****{{/credentialSubject/city/0/value}}***</svg>")
         case _ where url.contains("qrcode.svg"):
-            return "<svg>QR code : <image id = \"qrCodeImage\" xlink:href{{/qrCodeImage}}</svg>"
+            return TemplateResponse(contentType: .svg, body:"<svg>QR code : <image id = \"qrCodeImage\" xlink:href{{/qrCodeImage}}</svg>")
         case _ where url.contains("multilingual.svg"):
-            return "<svg>" +
+            return TemplateResponse(contentType: .svg, body:"<svg>" +
             "{{/credential_definition/credentialSubject/fullName/display/0/name}}: {{/credentialSubject/fullName/0/value}}," +
             "{{/credential_definition/credentialSubject/fullName/display/1/name}}: {{/credentialSubject/fullName/1/value}}" +
-            "</svg>"
+            "</svg>")
         case _ where url.contains("test-digest.svg"):
-            return "<svg>Email: {{/credentialSubject/email}}, Mobile: {{/credentialSubject/mobile}}</svg>"
+            return TemplateResponse(contentType: .svg, body:"<svg>Email: {{/credentialSubject/email}}, Mobile: {{/credentialSubject/mobile}}</svg>")
         default:
-            return "<svg>default</svg>"
+            return TemplateResponse(contentType: .svg, body:"<svg>default</svg>")
         }
     }
 }
@@ -38,7 +38,7 @@ final class InjiVcRendererTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        Utils.networkHandler = MockNetworkManager()
+        TemplateHelper.networkHandler = MockNetworkManager()
         renderer = InjiVcRenderer(traceabilityId: traceabilityId)
     }
 
@@ -326,101 +326,6 @@ final class InjiVcRendererTests: XCTestCase {
         let resultAny = try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)
         let result = resultAny.compactMap { $0 as? String }
         XCTAssertEqual(result, ["<svg>Email: test@test.com, Mobile: -</svg>"])
-    }
-    
-    func testWithWellknownAndLabelPlaceholderPresentInSvg() throws {
-        let vcJsonString = """
-        {
-            "credentialSubject": {
-                "fullName": [
-                    {
-                        "language": "eng",
-                        "value": "John Doe"
-                    },
-                    {
-                        "language": "tam",
-                        "value": "ஜான் டோ"
-                    }
-                ],
-                "mobile": "1234567890"
-            },
-            "renderMethod": {
-                "type": "TemplateRenderMethod",
-                "renderSuite": "svg-mustache",
-                  "template": {
-                    "id": "https://degree.example/credential-templates/multilingual.svg",
-                    "mediaType": "image/svg+xml"
-                  }
-              }
-          }
-        """
-        
-        let wellknownJsonString = """
-         {
-            "credential_definition": {
-              "type": [
-                "FarmerCredential_WithFace",
-                "VerifiableCredential"
-              ],
-              "credentialSubject": {
-                "fullName": {
-                      "display": [
-                         {
-                            "language": "eng",
-                            "name": "Full Name"
-                        },
-                        {
-                            "language": "tam",
-                            "name": "முழுப் பெயர்"
-                        }
-                      ]
-                }
-              }
-            }
-          }
-        """
-        let resultAny = try renderer.renderVC(credentialFormat : .ldp_vc, wellKnownJson: wellknownJsonString, vcJsonString: vcJsonString)
-        let result = resultAny.compactMap { $0 as? String }
-        XCTAssertEqual(result, ["<svg>" +
-                                "Full Name: John Doe," +
-                                "முழுப் பெயர்: ஜான் டோ" +
-                                "</svg>"])
-    }
-    
-    func testWithoutWellknownAndLabelPlaceholderPresentInSvg() throws {
-        let vcJsonString = """
-         {
-            "credentialSubject": {
-                "fullName": [
-                    {
-                        "language": "eng",
-                        "value": "John Doe"
-                    },
-                    {
-                        "language": "tam",
-                        "value": "ஜான் டோ"
-                    }
-                ],
-                "mobile": "1234567890"
-            },
-            "renderMethod": {
-                "type": "TemplateRenderMethod",
-                "renderSuite": "svg-mustache",
-                  "template": {
-                    "id": "https://degree.example/credential-templates/multilingual.svg",
-                    "mediaType": "image/svg+xml"
-                  }
-              }
-          }
-        """
-        
-    
-        let resultAny = try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)
-        let result = resultAny.compactMap { $0 as? String }
-        XCTAssertEqual(result, ["<svg>" +
-                                "Full Name: John Doe," +
-                                "Full Name: ஜான் டோ" +
-                                "</svg>"])
     }
     
     func testDigestMultibaseValid() throws {
