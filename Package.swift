@@ -14,18 +14,22 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/mosip/pixelpass-ios-swift.git", from: "0.6.3"),
+        .package(url: "https://github.com/tadija/AEXML.git", from: "4.6.0")
+
     ],
     targets: [
         .target(
             name: "InjiVcRenderer",
             dependencies: [
                     .product(name: "pixelpass", package: "pixelpass-ios-swift"),
+                    "AEXML"
                 ]),
         .testTarget(
             name: "InjiVcRendererTests",
             dependencies: [
                 "InjiVcRenderer",
                 .product(name: "pixelpass", package: "pixelpass-ios-swift"),
-            ]),
+                "AEXML"
+            ])
     ]
 )

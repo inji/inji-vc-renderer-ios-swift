@@ -112,3 +112,14 @@ class MultibaseValidationException: VcRendererException {
         )
     }
 }
+
+class PageSetParsingException: VcRendererException {
+    init(traceabilityId: String, className: String?, exceptionMessage: String) {
+        super.init(
+            errorCode: VcRendererErrorCodes.xmlParsingFailed,
+            message: "Error while parsing the Pageset XML: \(exceptionMessage)",
+            className: className ?? "",
+            traceabilityId: traceabilityId
+        )
+    }
+}

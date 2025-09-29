@@ -60,7 +60,7 @@ final class NetworkManagerTests: XCTestCase {
 
     func testFetchSvg_InvalidUrl() {
         XCTAssertThrowsError(
-            try networkManager.fetchSvgAsText(url: "not a url", traceabilityId: "trace-1")
+            try networkManager.fetch(url: "not a url", traceabilityId: "trace-1")
         ) { error in
             XCTAssertTrue(error is VcRendererException)
             XCTAssertEqual((error as? VcRendererException)?.errorCode, VcRendererErrorCodes.svgFetchError)
@@ -72,7 +72,7 @@ final class NetworkManagerTests: XCTestCase {
         MockURLProtocol.error = NSError(domain: "TestError", code: -1009)
 
         XCTAssertThrowsError(
-            try networkManager.fetchSvgAsText(url: "https://example.com/file.svg", traceabilityId: "trace-2")
+            try networkManager.fetch(url: "https://example.com/file.svg", traceabilityId: "trace-2")
         ) { error in
             XCTAssertTrue(error is VcRendererException)
             XCTAssertEqual((error as? VcRendererException)?.errorCode, VcRendererErrorCodes.svgFetchError)
@@ -86,7 +86,7 @@ final class NetworkManagerTests: XCTestCase {
                                                textEncodingName: nil)
 
         XCTAssertThrowsError(
-            try networkManager.fetchSvgAsText(url: "https://example.com/file.svg", traceabilityId: "trace-3")
+            try networkManager.fetch(url: "https://example.com/file.svg", traceabilityId: "trace-3")
         )
     }
 
@@ -102,7 +102,7 @@ final class NetworkManagerTests: XCTestCase {
         MockURLProtocol.responseData = "Not found".data(using: .utf8)
 
         XCTAssertThrowsError(
-            try networkManager.fetchSvgAsText(
+            try networkManager.fetch(
                 url: "https://example.com/file.svg",
                 traceabilityId: "trace-404"
             )
@@ -126,7 +126,7 @@ final class NetworkManagerTests: XCTestCase {
         MockURLProtocol.responseData = "<svg></svg>".data(using: .utf8)
 
         XCTAssertThrowsError(
-            try networkManager.fetchSvgAsText(url: "https://example.com/file.svg", traceabilityId: "trace-5")
+            try networkManager.fetch(url: "https://example.com/file.svg", traceabilityId: "trace-5")
         )
     }
 
@@ -140,12 +140,12 @@ final class NetworkManagerTests: XCTestCase {
         MockURLProtocol.response = response
         MockURLProtocol.responseData = "<svg>ok</svg>".data(using: .utf8)
 
-        let result = try networkManager.fetchSvgAsText(
+        let result = try networkManager.fetch(
             url: "https://example.com/file.svg",
             traceabilityId: "trace-6"
         )
 
-        XCTAssertEqual(result, "<svg>ok</svg>")
+        XCTAssertEqual(result, TemplateResponse(contentType: .svg, body: "<svg>ok</svg>"))
     }
 
 }
