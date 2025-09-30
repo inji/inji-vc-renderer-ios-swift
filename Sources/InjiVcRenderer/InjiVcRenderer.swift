@@ -51,4 +51,10 @@ public class InjiVcRenderer {
                 }
        }
     
+    /// Convenience wrapper to match Kotlin-style call
+    public func convertSvgToPdf(svgList: [String]) -> String? {
+        return SvgToPdfConvertor.svgListToPdfBase64(svgList: svgList)
+    }
+    
+    
    }

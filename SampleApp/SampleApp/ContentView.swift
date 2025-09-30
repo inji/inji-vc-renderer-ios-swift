@@ -12,7 +12,7 @@ struct ContentView: View {
                              {
                                "template": {
                                  "mediaType": "image/svg+xml",
-                                 "id": "https://<local-host>/templates/sample.xml"
+                                 "id": "https://localhost.lt/templates/farmer/certifyHosted/farmer_id_with_face_single_page.svg"
                                },
                                "renderSuite": "svg-mustache",
                                "type": "TemplateRenderMethod"
@@ -78,33 +78,52 @@ struct ContentView: View {
                       }
                   }
     """
-    
-    var body: some View {
-        VStack(spacing: 30) {
-            Button("Render VC") {
-                Task {
-                    do {
-                        // Render VC to SVGs
-                        let svgList = try await renderer.renderVC(
-                            credentialFormat: .ldp_vc,
-                            wellKnownJson: nil,
-                            vcJsonString: testVc
-                        ).compactMap { $0 as? String }
-                        print("Replaced Template::::::")
-                    } catch {
-                        print("❌ Error rendering VC: \(error)")
+    @State private var pdfBase64: String? = nil
+        @State private var svgList: [String] = [] // Store rendered SVGs
+
+        var body: some View {
+            VStack(spacing: 30) {
+                // 1️⃣ Render VC to SVGs
+                Button("Render VC") {
+                    Task {
+                        do {
+                            let rendered = try await renderer.renderVC(
+                                credentialFormat: .ldp_vc,
+                                wellKnownJson: nil,
+                                vcJsonString: testVc
+                            ).compactMap { $0 as? String }
+                            
+                            svgList = rendered
+                            print("✅ SVGs rendered: \(svgList.count)")
+                        } catch {
+                            print("❌ Error rendering VC: \(error)")
+                        }
                     }
                 }
+                
+                // 2️⃣ Convert rendered SVGs → PDF
+                Button("SVG → PDF") {
+                    guard !svgList.isEmpty else {
+                        print("⚠️ No SVGs available. Please render VC first.")
+                        return
+                    }
+
+                    pdfBase64 = renderer.convertSvgToPdf(svgList: svgList)
+                    
+                    if let pdfBase64 = pdfBase64 {
+                        print("📄 PDF Base64 length: \(pdfBase64.count)")
+                        print("📄 Full Base64 string:\n\(pdfBase64)")
+                    }
+                }
+                .padding()
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(10)
             }
             .padding()
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(10)
-            
         }
     }
-}
 
-#Preview {
-    ContentView()
-}
+    #Preview {
+        ContentView()
+    }
