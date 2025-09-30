@@ -28,20 +28,21 @@ public class InjiVcRenderer {
                 className: String(describing: InjiVcRenderer.self)
             )
         }
-        let renderMethodHelper = RenderMethodHelper(traceabilityId: traceabilityId)
+        let templateHelper = TemplateHelper(traceabilityId: traceabilityId)
+        let jsonPointerResolver = JsonPointerResolver(traceabilityId: traceabilityId)
 
-        let vcJsonObject = try renderMethodHelper.parseVcJson(vcJsonString: vcJsonString)
-        let renderMethodArray = try renderMethodHelper.parseRenderMethod(vcJsonObject)
+        let vcJsonObject = try templateHelper.parseVcJson(vcJsonString: vcJsonString)
+        let renderMethodArray = try templateHelper.parseRenderMethod(vcJsonObject)
         
         
         return try renderMethodArray.flatMap { renderMethodElement -> [String] in
-            let svgList = try TemplateHelper(traceabilityId: traceabilityId).extractSVG(
+            let svgList = try templateHelper.extractSVG(
                         renderMethod: renderMethodElement,
                         vcJsonString: vcJsonString
                     )
 
                     return try svgList.map { rawSvg in
-                        try PlaceholderReplacementHelper(traceabilityId: traceabilityId).replaceSvgPlaceholders(
+                        try jsonPointerResolver.replaceSvgPlaceholders(
                             svgTemplate: rawSvg,
                             vcJson: vcJsonObject,
                             renderMethodElement: renderMethodElement,

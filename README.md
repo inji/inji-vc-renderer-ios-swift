@@ -58,10 +58,7 @@ Sources
 │   │   ├── QRCodeGenerator.swift  # QR code generation utility
 │── templateEngine/svg/        # Json Pointer Algorithm implementation
     |--JsonPointerResolver.swift    
-├── utils      # Utility classes
-|   ├── DigestMultibaseHelper.kt               
-│   ├── PlaceholderReplacementHelper.swift   
-│   ├── RenderMethodHelper.swift      
+├── utils      # Utility classes    
 │   ├── TemplateHelper.swift      
 │   └── XMLHelper.swift
 ├── networkManager      
