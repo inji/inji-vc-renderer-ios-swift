@@ -55,14 +55,7 @@ class NetworkManager: NetworkManagerProtocol {
                     className: String(describing: NetworkManager.self)
                 )
 
-                guard let data = data, let body = String(data: data, encoding: .utf8) else {
-                    fetchError = SvgFetchException(
-                        traceabilityId: traceabilityId,
-                        className: String(describing: NetworkManager.self),
-                        exceptionMessage: "Empty response body"
-                    )
-                    return
-                }
+                let body = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
 
                 result = TemplateResponse(contentType: contentType, body: body)
             } catch let e as VcRendererException {

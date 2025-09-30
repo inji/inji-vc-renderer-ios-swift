@@ -33,6 +33,15 @@ class TemplateHelper {
            } catch {
                throw SvgFetchException(traceabilityId: traceabilityId, className: className, exceptionMessage: error.localizedDescription)
            }
+        
+        guard !templateResponse.body.isEmpty else {
+            throw SvgFetchException(
+                traceabilityId: traceabilityId,
+                className: String(describing: NetworkManager.self),
+                exceptionMessage: "Empty response body"
+            )
+        }
+        
         let digestMultibase = templateValue[Constants.DIGEST_MULTIBASE] as? String
         if let digestMultibase = digestMultibase,
            try !validateDigestMultibase(svgString: templateResponse.body, digestMultibase: digestMultibase) {
