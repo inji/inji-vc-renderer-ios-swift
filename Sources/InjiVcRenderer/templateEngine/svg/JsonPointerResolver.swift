@@ -22,6 +22,23 @@ final class JsonPointerResolver {
 
 
 
+    fileprivate static func toReplacementString(_ value: Any?) -> String {
+        switch value {
+        case nil:
+            return "-"
+        case let v as String:
+            return v
+        case let v as NSNumber:
+            return v.stringValue
+        case let v as [Any]:
+            return jsonString(from: v) ?? "\(v)"
+        case let v as [String: Any]:
+            return jsonString(from: v) ?? "\(v)"
+        default:
+            return "-"
+        }
+    }
+    
     /// Replaces placeholders in an SVG template using a Verifiable Credential JSON.
     /// Supports optional whitelist of allowed placeholders.
     static func replacePlaceholders(svgTemplate: String,
@@ -64,21 +81,7 @@ final class JsonPointerResolver {
                     }
             }
 
-            let replacement: String
-            switch value {
-            case nil:
-                replacement = "-"
-            case let v as String:
-                replacement = v
-            case let v as NSNumber:
-                replacement = v.stringValue
-            case let v as [Any]:
-                replacement = jsonString(from: v) ?? "\(v)"
-            case let v as [String: Any]:
-                replacement = jsonString(from: v) ?? "\(v)"
-            default:
-                replacement = "-"
-            }
+            let replacement: String = toReplacementString(value)
 
             result.replaceSubrange(Range(match.range, in: result)!, with: replacement)
         }
