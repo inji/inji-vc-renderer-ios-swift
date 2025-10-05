@@ -24,7 +24,7 @@ public class XMLHelper {
             }
 
             var svgList: [String] = []
-            for (index, page) in pages.enumerated() {
+            for page in pages {
                 let svgNode = page["svg"].xml
 
                 svgList.append(svgNode)
