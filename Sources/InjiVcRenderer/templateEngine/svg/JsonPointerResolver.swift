@@ -88,7 +88,9 @@ final class JsonPointerResolver {
 
     /// Strict RFC 6901 JSON Pointer resolution
     static func resolvePointer(root: Any, pointer: String) throws -> Any {
-        if pointer.isEmpty { return root }
+        if pointer.isEmpty {
+            return root
+        }
         guard pointer.first == "/" else { throw JsonPointerError.invalidPointer }
 
         let tokens = pointer.dropFirst().split(separator: "/").map {
@@ -110,14 +112,6 @@ final class JsonPointerResolver {
         }
         return current
     }
-
-        private static func matchString(_ text: String, _ nsRange: NSRange) -> String {
-            if let range = Range(nsRange, in: text) {
-                return String(text[range])
-            }
-            return ""
-        }
-
 
     private static func jsonString(from value: Any) -> String? {
         guard JSONSerialization.isValidJSONObject(value) else { return nil }
@@ -141,8 +135,8 @@ final class JsonPointerResolver {
     
     private func replaceVcPlaceholders(svgTemplate: String, vcJson: [String: Any], element: [String: Any])throws -> String {
         var renderProperties: [String]? = nil
-                if let template = element[Constants.TEMPLATE] as? [String: Any],
-                   let renderProperty = template[Constants.RENDER_PROPERTY] as? [String] {
+                if let template = element[Constants.template] as? [String: Any],
+                   let renderProperty = template[Constants.renderProperty] as? [String] {
                     renderProperties = renderProperty
                 }
         return  try JsonPointerResolver.replacePlaceholders(
@@ -158,7 +152,7 @@ final class JsonPointerResolver {
         svgTemplate: String,
             vcJsonString: String
         ) -> String {
-            guard svgTemplate.contains(Constants.QR_CODE_PLACEHOLDER) else {
+            guard svgTemplate.contains(Constants.qrCodePlaceholder) else {
                 return svgTemplate
             }
 
@@ -174,16 +168,16 @@ final class JsonPointerResolver {
 
             let (finalQrBase64, imageId): (String, String) = {
                 if let qr = qrBase64, !qr.isEmpty {
-                    return (qr, Constants.QR_CODE_IMAGE_ID)
+                    return (qr, Constants.qrCodeImageId)
                 } else {
-                    return (Constants.FALLBACK_QR_CODE, Constants.QR_CODE_FALLBACK_IMAGE_ID)
+                    return (Constants.fallbackQrCode, Constants.qrCodeFallbackImageId)
                 }
             }()
 
-            let qrImageTag = "\(Constants.QR_IMAGE_PREFIX),\(finalQrBase64)"
+            let qrImageTag = "\(Constants.qrImagePrefix),\(finalQrBase64)"
 
             return svgTemplate
-                .replacingOccurrences(of: Constants.QR_CODE_PLACEHOLDER, with: qrImageTag)
-                .replacingOccurrences(of: Constants.QR_CODE_IMAGE_ID, with: imageId)
+                .replacingOccurrences(of: Constants.qrCodePlaceholder, with: qrImageTag)
+                .replacingOccurrences(of: Constants.qrCodeImageId, with: imageId)
         }
 }

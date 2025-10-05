@@ -57,24 +57,24 @@ final class TemplateHelperTests: XCTestCase {
     }
     func testParseRenderMethod_validArray() throws {
         let input: [String: Any] = [
-            Constants.RENDER_METHOD: [
-                [Constants.RENDER_SUITE: Constants.SVG_MUSTACHE]
+            Constants.renderMethod: [
+                [Constants.renderSuite: Constants.svgMustache]
             ]
         ]
 
         let result = try helper.parseRenderMethod(input)
         XCTAssertEqual(result.count, 1)
-        XCTAssertEqual(result[0][Constants.RENDER_SUITE] as? String, Constants.SVG_MUSTACHE)
+        XCTAssertEqual(result[0][Constants.renderSuite] as? String, Constants.svgMustache)
     }
 
     func testParseRenderMethod_validDict() throws {
         let input: [String: Any] = [
-            Constants.RENDER_METHOD: [Constants.TYPE: Constants.TEMPLATE_RENDER_METHOD]
+            Constants.renderMethod: [Constants.type: Constants.templateRenderMethod]
         ]
 
         let result = try helper.parseRenderMethod(input)
         XCTAssertEqual(result.count, 1)
-        XCTAssertEqual(result[0][Constants.TYPE] as? String, Constants.TEMPLATE_RENDER_METHOD)
+        XCTAssertEqual(result[0][Constants.type] as? String, Constants.templateRenderMethod)
     }
 
     func testParseRenderMethod_missingKey() {
@@ -86,7 +86,7 @@ final class TemplateHelperTests: XCTestCase {
     }
 
     func testParseRenderMethod_emptyArray() {
-        let input: [String: Any] = [Constants.RENDER_METHOD: []]
+        let input: [String: Any] = [Constants.renderMethod: []]
 
         XCTAssertThrowsError(try helper.parseRenderMethod(input)) { error in
             XCTAssertTrue(error is InvalidRenderMethodException)
@@ -94,7 +94,7 @@ final class TemplateHelperTests: XCTestCase {
     }
 
     func testParseRenderMethod_arrayWithEmptyDict() {
-        let input: [String: Any] = [Constants.RENDER_METHOD: [[:]]]
+        let input: [String: Any] = [Constants.renderMethod: [[:]]]
 
         XCTAssertThrowsError(try helper.parseRenderMethod(input)) { error in
             XCTAssertTrue(error is InvalidRenderMethodException)
@@ -102,7 +102,7 @@ final class TemplateHelperTests: XCTestCase {
     }
 
     func testParseRenderMethod_emptyDict() {
-        let input: [String: Any] = [Constants.RENDER_METHOD: [:]]
+        let input: [String: Any] = [Constants.renderMethod: [:]]
 
         XCTAssertThrowsError(try helper.parseRenderMethod(input)) { error in
             XCTAssertTrue(error is InvalidRenderMethodException)
@@ -110,7 +110,7 @@ final class TemplateHelperTests: XCTestCase {
     }
 
     func testParseRenderMethod_wrongType() {
-        let input: [String: Any] = [Constants.RENDER_METHOD: "invalid"]
+        let input: [String: Any] = [Constants.renderMethod: "invalid"]
 
         XCTAssertThrowsError(try helper.parseRenderMethod(input)) { error in
             XCTAssertTrue(error is InvalidRenderMethodException)
@@ -119,12 +119,12 @@ final class TemplateHelperTests: XCTestCase {
 
 
     func testValidateSvgMustacheRenderSuite_valid() throws {
-        let renderMethod = [Constants.RENDER_SUITE: Constants.SVG_MUSTACHE]
+        let renderMethod = [Constants.renderSuite: Constants.svgMustache]
         XCTAssertNoThrow(try helper.validateSvgMustacheRenderSuite(renderMethod))
     }
 
     func testValidateSvgMustacheRenderSuite_invalid() {
-        let renderMethod = [Constants.RENDER_SUITE: "other"]
+        let renderMethod = [Constants.renderSuite: "other"]
         XCTAssertThrowsError(try helper.validateSvgMustacheRenderSuite(renderMethod)) { error in
             XCTAssertTrue(error is InvalidRenderSuiteException)
         }
@@ -132,12 +132,12 @@ final class TemplateHelperTests: XCTestCase {
 
 
     func testValidateTemplateRenderMethodType_valid() throws {
-        let renderMethod = [Constants.TYPE: Constants.TEMPLATE_RENDER_METHOD]
+        let renderMethod = [Constants.type: Constants.templateRenderMethod]
         XCTAssertNoThrow(try helper.validateTemplateRenderMethodType(renderMethod))
     }
 
     func testValidateTemplateRenderMethodType_invalid() {
-        let renderMethod = [Constants.TYPE: "other"]
+        let renderMethod = [Constants.type: "other"]
         XCTAssertThrowsError(try helper.validateTemplateRenderMethodType(renderMethod)) { error in
             XCTAssertTrue(error is InvalidRenderMethodTypeException)
         }

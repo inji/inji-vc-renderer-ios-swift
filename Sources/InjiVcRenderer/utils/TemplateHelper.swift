@@ -19,11 +19,11 @@ class TemplateHelper {
         try validateSvgMustacheRenderSuite(renderMethod)
         try validateTemplateRenderMethodType(renderMethod)
 
-        guard let templateValue = renderMethod[Constants.TEMPLATE] as? [String: Any] else {
+        guard let templateValue = renderMethod[Constants.template] as? [String: Any] else {
             throw InvalidRenderMethodException(traceabilityId: traceabilityId, className: className)
         }
 
-        guard let templateId = templateValue[Constants.ID] as? String else {
+        guard let templateId = templateValue[Constants.id] as? String else {
             throw MissingTemplateIdException(traceabilityId: traceabilityId, className: className)
         }
 
@@ -42,7 +42,7 @@ class TemplateHelper {
             )
         }
         
-        let digestMultibase = templateValue[Constants.DIGEST_MULTIBASE] as? String
+        let digestMultibase = templateValue[Constants.digestMultibase] as? String
         if let digestMultibase = digestMultibase,
            try !validateDigestMultibase(svgString: templateResponse.body, digestMultibase: digestMultibase) {
             throw MultibaseValidationException(
@@ -102,7 +102,7 @@ class TemplateHelper {
     }
     
     func parseRenderMethod(_ jsonObject: [String: Any]) throws -> [[String: Any]] {
-        guard let renderMethodValue = jsonObject[Constants.RENDER_METHOD] else {
+        guard let renderMethodValue = jsonObject[Constants.renderMethod] else {
             throw InvalidRenderMethodException(traceabilityId: traceabilityId, className: className)
         }
         
@@ -122,13 +122,13 @@ class TemplateHelper {
     }
     
     private func isSvgMustacheRenderSuite(_ renderMethod: [String: Any]) -> Bool {
-        let renderSuite = renderMethod[Constants.RENDER_SUITE] as? String ?? ""
-        return renderSuite == Constants.SVG_MUSTACHE
+        let renderSuite = renderMethod[Constants.renderSuite] as? String ?? ""
+        return renderSuite == Constants.svgMustache
     }
     
     private func isTemplateRenderMethodType(_ renderMethod: [String: Any]) -> Bool {
-        let type = renderMethod[Constants.TYPE] as? String ?? ""
-        return type == Constants.TEMPLATE_RENDER_METHOD
+        let type = renderMethod[Constants.type] as? String ?? ""
+        return type == Constants.templateRenderMethod
     }
     
     

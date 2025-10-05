@@ -154,7 +154,7 @@ final class InjiVcRendererTests: XCTestCase {
         let vcJsonString = #"{ "renderMethod": [ { "type": "TemplateRenderMethod", "renderSuite": "invalid-suite" } ] }"#
         XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
             assertVcRendererException(error,
-                       expectedMessage: "Render suite must be '\(Constants.SVG_MUSTACHE)'",
+                       expectedMessage: "Render suite must be '\(Constants.svgMustache)'",
                                       expectedCode: VcRendererErrorCodes.invalidRenderSuite
                    )
         }
@@ -164,7 +164,7 @@ final class InjiVcRendererTests: XCTestCase {
         let vcJsonString = #"{ "renderMethod": [ { "type": "invalid", "renderSuite": "svg-mustache" } ] }"#
         XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
             assertVcRendererException(error,
-                       expectedMessage: "Render method type must be '\(Constants.TEMPLATE_RENDER_METHOD)'",
+                       expectedMessage: "Render method type must be '\(Constants.templateRenderMethod)'",
                                       expectedCode: VcRendererErrorCodes.invalidRenderMethodType
                    )
         }
@@ -174,7 +174,7 @@ final class InjiVcRendererTests: XCTestCase {
         let vcJsonString = #"{ "renderMethod": { "type": "TemplateRenderMethod", "renderSuite": "invalid-suite" } }"#
         XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
             assertVcRendererException(error,
-                       expectedMessage: "Render suite must be '\(Constants.SVG_MUSTACHE)'",
+                       expectedMessage: "Render suite must be '\(Constants.svgMustache)'",
                                       expectedCode: VcRendererErrorCodes.invalidRenderSuite
                    )
         }
@@ -184,7 +184,7 @@ final class InjiVcRendererTests: XCTestCase {
         let vcJsonString = #"{ "renderMethod": { "type": "invalid", "renderSuite": "svg-mustache" } }"#
         XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
             assertVcRendererException(error,
-                       expectedMessage: "Render method type must be '\(Constants.TEMPLATE_RENDER_METHOD)'",
+                       expectedMessage: "Render method type must be '\(Constants.templateRenderMethod)'",
                                       expectedCode: VcRendererErrorCodes.invalidRenderMethodType
                    )
         }
