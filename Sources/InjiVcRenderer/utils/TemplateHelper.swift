@@ -13,8 +13,7 @@ class TemplateHelper {
     
 
     /// Extracts an SVG template after validation
-    func extractSVG(renderMethod: [String: Any],
-                                   vcJsonString: String) throws -> [String] {
+    func extractSVG(renderMethod: [String: Any]) throws -> [String] {
 
         try validateSvgMustacheRenderSuite(renderMethod)
         try validateTemplateRenderMethodType(renderMethod)

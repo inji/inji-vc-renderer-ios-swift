@@ -37,9 +37,8 @@ public class InjiVcRenderer {
         
         return try renderMethodArray.flatMap { renderMethodElement -> [String] in
             let svgList = try templateHelper.extractSVG(
-                        renderMethod: renderMethodElement,
-                        vcJsonString: vcJsonString
-                    )
+                renderMethod: renderMethodElement
+            )
 
                     return try svgList.map { rawSvg in
                         try jsonPointerResolver.replaceSvgPlaceholders(
