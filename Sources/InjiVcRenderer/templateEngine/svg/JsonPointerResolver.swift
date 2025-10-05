@@ -22,7 +22,7 @@ final class JsonPointerResolver {
 
 
 
-    fileprivate static func toReplacementString(_ value: Any?) -> String {
+    private static func toReplaceMentString(_ value: Any?) -> String {
         switch value {
         case nil:
             return "-"
@@ -81,7 +81,7 @@ final class JsonPointerResolver {
                     }
             }
 
-            let replacement: String = toReplacementString(value)
+            let replacement: String = toReplaceMentString(value)
 
             result.replaceSubrange(Range(match.range, in: result)!, with: replacement)
         }
