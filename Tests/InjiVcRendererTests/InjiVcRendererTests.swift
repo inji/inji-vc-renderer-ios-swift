@@ -55,7 +55,7 @@ final class InjiVcRendererTests: XCTestCase {
     func testParseVcJson_Unsupported_CredentialFormat() {
         let invalidJson = #"{"name": }"#
         
-        XCTAssertThrowsError(try renderer.renderVC(credentialFormat : CredentialFormat.fromValue("mso_mdoc"), vcJsonString: invalidJson)) { error in
+        XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : CredentialFormat.fromValue("mso_mdoc"), vcJsonString: invalidJson)) { error in
             guard let vcError = error as? VcRendererException else {
                 XCTFail("Expected VcRendererException but got \(error)")
                 return
@@ -82,7 +82,7 @@ final class InjiVcRendererTests: XCTestCase {
             }
         }
         """
-        let resultAny = try renderer.renderVC(credentialFormat : CredentialFormat.fromValue("ldp_vc"), vcJsonString: vcJsonString)
+        let resultAny = try renderer.generateCredentialDisplayContent(credentialFormat : CredentialFormat.fromValue("ldp_vc"), vcJsonString: vcJsonString)
         let result = resultAny.compactMap { $0 as? String }
         XCTAssertEqual(result, ["<svg>Email: test@gmail.com, Mobile: 1234567890</svg>"])
     }
@@ -90,7 +90,7 @@ final class InjiVcRendererTests: XCTestCase {
      func testParseVcJson_InvalidJson_Throws() {
          let invalidJson = #"{"name": }"# 
          
-         XCTAssertThrowsError(try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: invalidJson)) { error in
+         XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: invalidJson)) { error in
              guard let vcError = error as? VcRendererException else {
                  XCTFail("Expected VcRendererException but got \(error)")
                  return
@@ -102,7 +102,7 @@ final class InjiVcRendererTests: XCTestCase {
 
 
     func testHandlesMissingRenderMethod() {
-        XCTAssertThrowsError(try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: "{}")) { error in
+        XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: "{}")) { error in
             assertVcRendererException(error,
                        expectedMessage: "RenderMethod object is invalid",
                                       expectedCode: VcRendererErrorCodes.invalidRenderMethod
@@ -112,7 +112,7 @@ final class InjiVcRendererTests: XCTestCase {
 
     func testHandlesInvalidJsonInput() {
         let vcJsonString = #"{ "renderMethod": [ "invalid" ] }"#
-        XCTAssertThrowsError(try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
+        XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
             assertVcRendererException(error,
                        expectedMessage: "RenderMethod object is invalid",
                                       expectedCode: VcRendererErrorCodes.invalidRenderMethod
@@ -122,7 +122,7 @@ final class InjiVcRendererTests: XCTestCase {
 
     func testHandlesWithoutRenderMethodField() {
         let vcJsonString = #"{"someField": "someValue"}"#
-        XCTAssertThrowsError(try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
+        XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
             assertVcRendererException(error,
                        expectedMessage: "RenderMethod object is invalid",
                                       expectedCode: VcRendererErrorCodes.invalidRenderMethod
@@ -132,7 +132,7 @@ final class InjiVcRendererTests: XCTestCase {
 
     func testHandlesWithRenderMethodAsEmptyObject() {
         let vcJsonString = #"{ "renderMethod": { } }"#
-        XCTAssertThrowsError(try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
+        XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
             assertVcRendererException(error,
                        expectedMessage: "RenderMethod object is invalid",
                                       expectedCode: VcRendererErrorCodes.invalidRenderMethod
@@ -142,7 +142,7 @@ final class InjiVcRendererTests: XCTestCase {
 
     func testHandlesWithRenderMethodAsEmptyArray() {
         let vcJsonString = #"{ "renderMethod": [] }"#
-        XCTAssertThrowsError(try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
+        XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
             assertVcRendererException(error,
                        expectedMessage: "RenderMethod object is invalid",
                                       expectedCode: VcRendererErrorCodes.invalidRenderMethod
@@ -152,7 +152,7 @@ final class InjiVcRendererTests: XCTestCase {
 
     func testHandlesInvalidRenderSuite() {
         let vcJsonString = #"{ "renderMethod": [ { "type": "TemplateRenderMethod", "renderSuite": "invalid-suite" } ] }"#
-        XCTAssertThrowsError(try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
+        XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
             assertVcRendererException(error,
                        expectedMessage: "Render suite must be '\(Constants.SVG_MUSTACHE)'",
                                       expectedCode: VcRendererErrorCodes.invalidRenderSuite
@@ -162,7 +162,7 @@ final class InjiVcRendererTests: XCTestCase {
 
     func testHandlesInvalidType() {
         let vcJsonString = #"{ "renderMethod": [ { "type": "invalid", "renderSuite": "svg-mustache" } ] }"#
-        XCTAssertThrowsError(try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
+        XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
             assertVcRendererException(error,
                        expectedMessage: "Render method type must be '\(Constants.TEMPLATE_RENDER_METHOD)'",
                                       expectedCode: VcRendererErrorCodes.invalidRenderMethodType
@@ -172,7 +172,7 @@ final class InjiVcRendererTests: XCTestCase {
 
     func testHandlesRenderMethodAsJsonWithInvalidSuite() {
         let vcJsonString = #"{ "renderMethod": { "type": "TemplateRenderMethod", "renderSuite": "invalid-suite" } }"#
-        XCTAssertThrowsError(try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
+        XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
             assertVcRendererException(error,
                        expectedMessage: "Render suite must be '\(Constants.SVG_MUSTACHE)'",
                                       expectedCode: VcRendererErrorCodes.invalidRenderSuite
@@ -182,7 +182,7 @@ final class InjiVcRendererTests: XCTestCase {
 
     func testHandlesRenderMethodAsJsonWithInvalidType() {
         let vcJsonString = #"{ "renderMethod": { "type": "invalid", "renderSuite": "svg-mustache" } }"#
-        XCTAssertThrowsError(try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
+        XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
             assertVcRendererException(error,
                        expectedMessage: "Render method type must be '\(Constants.TEMPLATE_RENDER_METHOD)'",
                                       expectedCode: VcRendererErrorCodes.invalidRenderMethodType
@@ -212,7 +212,7 @@ final class InjiVcRendererTests: XCTestCase {
             }
         }
         """
-        XCTAssertThrowsError(try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJson)) { error in
+        XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJson)) { error in
             assertVcRendererException(error,
                        expectedMessage: "Template ID is missing in renderMethod",
                                       expectedCode: VcRendererErrorCodes.missingTemplateId
@@ -242,7 +242,7 @@ final class InjiVcRendererTests: XCTestCase {
             }
         }
         """
-        let resultAny = try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJson)
+        let resultAny = try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJson)
         let result = resultAny.compactMap { $0 as? String }
         XCTAssertEqual(result, [
             "<svg>Address : TEST_ADDRESS_LINE_1eng****TEST_REGIONeng****TEST_CITYeng***</svg>"
@@ -266,7 +266,7 @@ final class InjiVcRendererTests: XCTestCase {
             }
         }
         """
-        let resultAny = try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)
+        let resultAny = try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)
         let result = resultAny.compactMap { $0 as? String }
         XCTAssertEqual(result, ["<svg>Email: test@gmail.com, Mobile: 1234567890</svg>"])
     }
@@ -299,7 +299,7 @@ final class InjiVcRendererTests: XCTestCase {
             ]
         }
         """
-        let resultAny = try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)
+        let resultAny = try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)
         let result = resultAny.compactMap { $0 as? String }
         XCTAssertEqual(result, [
             "<svg>Email: test@gmail.com, Mobile: John Doe</svg>",
@@ -328,7 +328,7 @@ final class InjiVcRendererTests: XCTestCase {
             }
         }
         """
-        let resultAny = try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)
+        let resultAny = try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)
         let result = resultAny.compactMap { $0 as? String }
         XCTAssertEqual(result, ["<svg>Email: test@test.com, Mobile: -</svg>"])
     }
@@ -353,7 +353,7 @@ final class InjiVcRendererTests: XCTestCase {
         """
         
     
-        let resultAny = try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)
+        let resultAny = try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)
         let result = resultAny.compactMap { $0 as? String }
         XCTAssertEqual(result, ["<svg>Email: test@test.com, Mobile: 1234567890</svg>"])
     }
@@ -376,7 +376,7 @@ final class InjiVcRendererTests: XCTestCase {
                }
            }
         """
-        XCTAssertThrowsError(try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
+        XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
             assertVcRendererException(error,
                        expectedMessage: "Multibase validation failed: Mismatch between fetched SVG and provided digestMultibase",
                                       expectedCode: VcRendererErrorCodes.multibaseValidationFailed
@@ -402,7 +402,7 @@ final class InjiVcRendererTests: XCTestCase {
                }
            }
         """
-        XCTAssertThrowsError(try renderer.renderVC(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
+        XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : .ldp_vc, vcJsonString: vcJsonString)) { error in
             assertVcRendererException(error,
                        expectedMessage: "Multibase validation failed: digestMultibase must start with 'u'",
                                       expectedCode: VcRendererErrorCodes.multibaseValidationFailed
@@ -427,7 +427,7 @@ final class InjiVcRendererTests: XCTestCase {
           }
         }
         """
-        let resultAny = try renderer.renderVC(
+        let resultAny = try renderer.generateCredentialDisplayContent(
             credentialFormat: CredentialFormat.fromValue("ldp_vc"),
             vcJsonString: vcJsonString
         )

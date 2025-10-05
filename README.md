@@ -8,7 +8,7 @@ To include InjiVcRenderer in your Swift project:
 - Add package dependency: Enter Package URL of InjiVcRenderer repo
 
 ### API
-- `renderVC(credentialFormat: CredentialFormat, wellKnownJson: String? = nil, vcJsonString: String): [Any]` - expects the Verifiable Credential as parameter and returns the replaced SVG Template.
+- `generateCredentialDisplayContent(credentialFormat: CredentialFormat, wellKnownJson: String? = nil, vcJsonString: String): [Any]` - expects the Verifiable Credential as parameter and returns the replaced SVG Template.
     - `vcJsonString` - VC Downloaded in stringified format.
     - `wellKnownJson` - Well-known Json downloaded in stringified format. It is optional parameter.
     - `credentialFormat` - Enum to specify the credential format. Currently only LDP_VC format is supported.
@@ -74,7 +74,7 @@ Sources
 4. MissingTemplateIdException is thrown if template id is missing in render method
 5. SvgFetchException is thrown if fetching SVG from the URL fails
 6. InvalidRenderMethodException is thrown if render method object is invalid
-7. UnsupportedCredentialFormat is thrown if credential format other than ldpVc is passed to the renderVC method
+7. UnsupportedCredentialFormat is thrown if credential format other than ldpVc is passed to the generateCredentialDisplayContent method
 8. MultibaseValidationException is thrown if digestMultibase validation fails
 
 

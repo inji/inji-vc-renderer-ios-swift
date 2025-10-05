@@ -20,7 +20,7 @@ public class InjiVcRenderer {
                  
      - Returns: A list of rendered SVG strings. Empty list if no valid render methods found or on error.  Return is List<Any> to accommodate future extensions.
      */
-    public func renderVC(credentialFormat: CredentialFormat, wellKnownJson: String? = nil, vcJsonString: String) throws -> [Any] {
+    public func generateCredentialDisplayContent(credentialFormat: CredentialFormat, wellKnownJson: String? = nil, vcJsonString: String) throws -> [Any] {
         
         guard credentialFormat == .ldp_vc else {
             throw UnsupportedCredentialFormat(
