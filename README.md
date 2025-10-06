@@ -74,8 +74,7 @@ Sources
 4. MissingTemplateIdException is thrown if template id is missing in render method
 5. SvgFetchException is thrown if fetching SVG from the URL fails
 6. InvalidRenderMethodException is thrown if render method object is invalid
-7. UnsupportedCredentialFormat is thrown if credential format other than ldpVc is passed to the generateCredentialDisplayContent method
-8. MultibaseValidationException is thrown if digestMultibase validation fails
+7. MultibaseValidationException is thrown if digestMultibase validation fails
 
 
 

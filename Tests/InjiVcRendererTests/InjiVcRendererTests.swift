@@ -52,19 +52,6 @@ final class InjiVcRendererTests: XCTestCase {
         super.tearDown()
     }
     
-    func testParseVcJson_Unsupported_CredentialFormat() {
-        let invalidJson = #"{"name": }"#
-        
-        XCTAssertThrowsError(try renderer.generateCredentialDisplayContent(credentialFormat : CredentialFormat.fromValue("mso_mdoc"), vcJsonString: invalidJson)) { error in
-            guard let vcError = error as? VcRendererException else {
-                XCTFail("Expected VcRendererException but got \(error)")
-                return
-            }
-            XCTAssertEqual(vcError.errorCode, VcRendererErrorCodes.unsupportedCredentialFormat)
-            XCTAssertTrue(vcError.message.contains("Only LDP_VC credential format is supported"))
-        }
-    }
-    
     func testParseVcJson_Supported_CredentialFormat() throws {
         let vcJsonString = """
         {
@@ -82,7 +69,7 @@ final class InjiVcRendererTests: XCTestCase {
             }
         }
         """
-        let resultAny = try renderer.generateCredentialDisplayContent(credentialFormat : CredentialFormat.fromValue("ldp_vc"), vcJsonString: vcJsonString)
+        let resultAny = try renderer.generateCredentialDisplayContent(credentialFormat : CredentialFormat.fromValue("ldp_vc")!, vcJsonString: vcJsonString)
         let result = resultAny.compactMap { $0 as? String }
         XCTAssertEqual(result, ["<svg>Email: test@gmail.com, Mobile: 1234567890</svg>"])
     }
@@ -428,7 +415,7 @@ final class InjiVcRendererTests: XCTestCase {
         }
         """
         let resultAny = try renderer.generateCredentialDisplayContent(
-            credentialFormat: CredentialFormat.fromValue("ldp_vc"),
+            credentialFormat: CredentialFormat.fromValue("ldp_vc")!,
             vcJsonString: vcJsonString
         )
         let result = resultAny.compactMap { $0 as? String }
