@@ -20,28 +20,21 @@ public class InjiVcRenderer {
                  
      - Returns: A list of rendered SVG strings. Empty list if no valid render methods found or on error.  Return is List<Any> to accommodate future extensions.
      */
-    public func renderVC(credentialFormat: CredentialFormat, wellKnownJson: String? = nil, vcJsonString: String) throws -> [Any] {
-        
-        guard credentialFormat == .ldp_vc else {
-            throw UnsupportedCredentialFormat(
-                traceabilityId: traceabilityId,
-                className: String(describing: InjiVcRenderer.self)
-            )
-        }
-        let renderMethodHelper = RenderMethodHelper(traceabilityId: traceabilityId)
+    public func generateCredentialDisplayContent(credentialFormat: CredentialFormat, wellKnownJson: String? = nil, vcJsonString: String) throws -> [Any] {
+        let templateHelper = TemplateHelper(traceabilityId: traceabilityId)
+        let jsonPointerResolver = JsonPointerResolver(traceabilityId: traceabilityId)
 
-        let vcJsonObject = try renderMethodHelper.parseVcJson(vcJsonString: vcJsonString)
-        let renderMethodArray = try renderMethodHelper.parseRenderMethod(vcJsonObject)
+        let vcJsonObject = try templateHelper.parseVcJson(vcJsonString: vcJsonString)
+        let renderMethodArray = try templateHelper.parseRenderMethod(vcJsonObject)
         
         
         return try renderMethodArray.flatMap { renderMethodElement -> [String] in
-            let svgList = try TemplateHelper(traceabilityId: traceabilityId).extractSVG(
-                        renderMethod: renderMethodElement,
-                        vcJsonString: vcJsonString
-                    )
+            let svgList = try templateHelper.extractSVG(
+                renderMethod: renderMethodElement
+            )
 
                     return try svgList.map { rawSvg in
-                        try PlaceholderReplacementHelper(traceabilityId: traceabilityId).replaceSvgPlaceholders(
+                        try jsonPointerResolver.replaceSvgPlaceholders(
                             svgTemplate: rawSvg,
                             vcJson: vcJsonObject,
                             renderMethodElement: renderMethodElement,

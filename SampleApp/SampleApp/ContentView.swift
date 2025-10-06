@@ -85,7 +85,7 @@ struct ContentView: View {
                 Task {
                     do {
                         // Render VC to SVGs
-                        let svgList = try await renderer.renderVC(
+                        let svgList = try await renderer.generateCredentialDisplayContent(
                             credentialFormat: .ldp_vc,
                             wellKnownJson: nil,
                             vcJsonString: testVc
