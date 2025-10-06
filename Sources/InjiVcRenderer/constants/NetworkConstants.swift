@@ -1,3 +1,3 @@
 struct NetworkConstants {
-    static let CONTENT_TYPE_SVG = "image/svg+xml"
+    static let contentTypeSvg = "image/svg+xml"
 }
