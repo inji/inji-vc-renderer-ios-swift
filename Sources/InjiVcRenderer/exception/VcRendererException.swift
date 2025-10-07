@@ -29,7 +29,7 @@ class InvalidRenderSuiteException: VcRendererException {
     init(traceabilityId: String, className: String?) {
         super.init(
             errorCode: VcRendererErrorCodes.invalidRenderSuite,
-            message: "Render suite must be '\(Constants.SVG_MUSTACHE)'",
+            message: "Render suite must be '\(Constants.svgMustache)'",
             className: className ?? "",
             traceabilityId: traceabilityId
         )
@@ -40,7 +40,7 @@ class InvalidRenderMethodTypeException: VcRendererException {
     init(traceabilityId: String, className: String?) {
         super.init(
             errorCode: VcRendererErrorCodes.invalidRenderMethodType,
-            message: "Render method type must be '\(Constants.TEMPLATE_RENDER_METHOD)'",
+            message: "Render method type must be '\(Constants.templateRenderMethod)'",
             className: className ?? "",
             traceabilityId: traceabilityId
         )

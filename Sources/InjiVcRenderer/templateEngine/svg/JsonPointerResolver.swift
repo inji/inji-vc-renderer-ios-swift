@@ -7,13 +7,38 @@ enum JsonPointerError: Error {
 }
 
 final class JsonPointerResolver {
+    private let traceabilityId: String
+
     private static let placeholderRegex = try! NSRegularExpression(
         pattern: #"\{\{(/[^}]*)\}\}|\{\{\}\}"#
     )
     public static let className = String(describing: JsonPointerResolver.self)
+    private let qrCodeGenerator: QrCodeGeneratorProtocol = QrCodeGenerator() as QrCodeGeneratorProtocol
+
+    
+    init(traceabilityId: String) {
+        self.traceabilityId = traceabilityId
+    }
 
 
 
+    private static func toReplaceMentString(_ value: Any?) -> String {
+        switch value {
+        case nil:
+            return "-"
+        case let v as String:
+            return v
+        case let v as NSNumber:
+            return v.stringValue
+        case let v as [Any]:
+            return jsonString(from: v) ?? "\(v)"
+        case let v as [String: Any]:
+            return jsonString(from: v) ?? "\(v)"
+        default:
+            return "-"
+        }
+    }
+    
     /// Replaces placeholders in an SVG template using a Verifiable Credential JSON.
     /// Supports optional whitelist of allowed placeholders.
     static func replacePlaceholders(svgTemplate: String,
@@ -56,21 +81,7 @@ final class JsonPointerResolver {
                     }
             }
 
-            let replacement: String
-            switch value {
-            case nil:
-                replacement = "-"
-            case let v as String:
-                replacement = v
-            case let v as NSNumber:
-                replacement = v.stringValue
-            case let v as [Any]:
-                replacement = jsonString(from: v) ?? "\(v)"
-            case let v as [String: Any]:
-                replacement = jsonString(from: v) ?? "\(v)"
-            default:
-                replacement = "-"
-            }
+            let replacement: String = toReplaceMentString(value)
 
             result.replaceSubrange(Range(match.range, in: result)!, with: replacement)
         }
@@ -80,7 +91,9 @@ final class JsonPointerResolver {
 
     /// Strict RFC 6901 JSON Pointer resolution
     static func resolvePointer(root: Any, pointer: String) throws -> Any {
-        if pointer.isEmpty { return root }
+        if pointer.isEmpty {
+            return root
+        }
         guard pointer.first == "/" else { throw JsonPointerError.invalidPointer }
 
         let tokens = pointer.dropFirst().split(separator: "/").map {
@@ -103,14 +116,6 @@ final class JsonPointerResolver {
         return current
     }
 
-        private static func matchString(_ text: String, _ nsRange: NSRange) -> String {
-            if let range = Range(nsRange, in: text) {
-                return String(text[range])
-            }
-            return ""
-        }
-
-
     private static func jsonString(from value: Any) -> String? {
         guard JSONSerialization.isValidJSONObject(value) else { return nil }
         if let data = try? JSONSerialization.data(withJSONObject: value,
@@ -120,4 +125,62 @@ final class JsonPointerResolver {
         }
         return nil
     }
+    
+    func replaceSvgPlaceholders(
+        svgTemplate: String,
+        vcJson: [String: Any],
+        renderMethodElement: [String: Any],
+        vcJsonString: String
+    ) throws -> String {
+        let svgWithQrCodeReplaced = replaceQrCodePlaceholder(svgTemplate: svgTemplate, vcJsonString: vcJsonString)
+        return try replaceVcPlaceholders(svgTemplate: svgWithQrCodeReplaced, vcJson: vcJson, element: renderMethodElement)
+    }
+    
+    private func replaceVcPlaceholders(svgTemplate: String, vcJson: [String: Any], element: [String: Any])throws -> String {
+        var renderProperties: [String]? = nil
+                if let template = element[Constants.template] as? [String: Any],
+                   let renderProperty = template[Constants.renderProperty] as? [String] {
+                    renderProperties = renderProperty
+                }
+        return  try JsonPointerResolver.replacePlaceholders(
+             svgTemplate: svgTemplate,
+             inputJson: vcJson,
+            renderProperties: renderProperties,
+            traceabilityId: traceabilityId
+        )
+
+    }
+    
+    private func replaceQrCodePlaceholder(
+        svgTemplate: String,
+            vcJsonString: String
+        ) -> String {
+            guard svgTemplate.contains(Constants.qrCodePlaceholder) else {
+                return svgTemplate
+            }
+
+            let qrBase64: String?
+            do {
+                qrBase64 = try qrCodeGenerator.generateQRCodeImage(
+                    vcJson: vcJsonString,
+                    traceabilityId: traceabilityId
+                )
+            } catch {
+                qrBase64 = nil
+            }
+
+            let (finalQrBase64, imageId): (String, String) = {
+                if let qr = qrBase64, !qr.isEmpty {
+                    return (qr, Constants.qrCodeImageId)
+                } else {
+                    return (Constants.fallbackQrCode, Constants.qrCodeFallbackImageId)
+                }
+            }()
+
+            let qrImageTag = "\(Constants.qrImagePrefix),\(finalQrBase64)"
+
+            return svgTemplate
+                .replacingOccurrences(of: Constants.qrCodePlaceholder, with: qrImageTag)
+                .replacingOccurrences(of: Constants.qrCodeImageId, with: imageId)
+        }
 }
