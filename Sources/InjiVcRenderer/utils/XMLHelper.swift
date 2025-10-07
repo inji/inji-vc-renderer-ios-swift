@@ -24,7 +24,7 @@ public class XMLHelper {
             }
 
             var svgList: [String] = []
-            for (index, page) in pages.enumerated() {
+            for page in pages {
                 let svgNode = page["svg"].xml
 
                 svgList.append(svgNode)
@@ -32,9 +32,10 @@ public class XMLHelper {
 
             return svgList
 
-        } catch let error as VcRendererException {
-            throw error
         } catch {
+            if let vcRendererError = error as? VcRendererException {
+                throw vcRendererError
+            }
             throw PageSetParsingException(
                 traceabilityId: traceabilityId,
                 className: String(describing: type(of: self)),
