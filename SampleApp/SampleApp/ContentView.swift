@@ -12,7 +12,7 @@ struct ContentView: View {
                              {
                                "template": {
                                  "mediaType": "image/svg+xml",
-                                 "id": "https://<local-host>/templates/sample.xml"
+                                 "id": "https://localhost.lt/templates/farmer/certifyHosted/farmer_id_with_face_single_page.svg"
                                },
                                "renderSuite": "svg-mustache",
                                "type": "TemplateRenderMethod"
@@ -78,6 +78,9 @@ struct ContentView: View {
                       }
                   }
     """
+
+    @State private var pdfBase64: String? = nil
+        @State private var svgList: [String] = [] // Store rendered SVGs
     
     var body: some View {
         VStack(spacing: 30) {
@@ -96,15 +99,30 @@ struct ContentView: View {
                     }
                 }
             }
+                
+                // 2️⃣ Convert rendered SVGs → PDF
+            Button("SVG → PDF") {
+                guard !svgList.isEmpty else {
+                    print("⚠️ No SVGs available. Please render VC first.")
+                    return
+                }
+
+                pdfBase64 = renderer.convertSvgToPdf(svgList: svgList)
+                
+                if let pdfBase64 = pdfBase64 {
+                    print("📄 PDF Base64 length: \(pdfBase64.count)")
+                    print("📄 Full Base64 string:\n\(pdfBase64)")
+                }
+            }
             .padding()
             .background(Color.blue)
             .foregroundColor(.white)
             .cornerRadius(10)
-            
         }
+            .padding()
     }
 }
 
-#Preview {
-    ContentView()
-}
+    #Preview {
+        ContentView()
+    }

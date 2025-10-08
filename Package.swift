@@ -14,7 +14,8 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/mosip/pixelpass-ios-swift.git", from: "0.6.3"),
-        .package(url: "https://github.com/tadija/AEXML.git", from: "4.6.0")
+        .package(url: "https://github.com/tadija/AEXML.git", from: "4.6.0"),
+        .package(url: "https://github.com/SVGKit/SVGKit.git", from: "3.0.0")
 
     ],
     targets: [
@@ -22,14 +23,16 @@ let package = Package(
             name: "InjiVcRenderer",
             dependencies: [
                     .product(name: "pixelpass", package: "pixelpass-ios-swift"),
-                    "AEXML"
+                    "AEXML",
+                    "SVGKit"
                 ]),
         .testTarget(
             name: "InjiVcRendererTests",
             dependencies: [
                 "InjiVcRenderer",
                 .product(name: "pixelpass", package: "pixelpass-ios-swift"),
-                "AEXML"
+                "AEXML",
+                "SVGKit"
             ])
     ]
 )
