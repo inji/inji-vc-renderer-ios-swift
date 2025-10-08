@@ -7,18 +7,22 @@ public class SvgToPdfConvertor {
     
     public static func svgListToPdfBase64(svgList: [String], pageSize: CGSize = CGSize(width: 595, height: 842)) async -> String? {
          let pdfDocument = PDFDocument()
+        guard !svgList.isEmpty else {
+                print("SVG list is empty, returning nil")
+                return nil
+            }
          
          for (index, svgString) in svgList.enumerated() {
              if let image = await renderSvgToImage(svgString: svgString, size: pageSize),
                 let pdfPage = PDFPage(image: image) {
                  pdfDocument.insert(pdfPage, at: index)
              } else {
-                 print("⚠️ Failed to render SVG at index \(index)")
+                 print("Failed to render SVG at index \(index)")
              }
          }
          
          guard let data = pdfDocument.dataRepresentation() else {
-             print("❌ Failed to generate PDF data")
+             print("Failed to generate PDF data")
              return nil
          }
          
