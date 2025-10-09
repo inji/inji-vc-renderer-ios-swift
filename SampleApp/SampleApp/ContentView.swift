@@ -12,11 +12,19 @@ struct ContentView: View {
                              {
                                "template": {
                                  "mediaType": "image/svg+xml",
-                                 "id": "https://localhost.lt/templates/farmer/certifyHosted/farmer_id_with_face_single_page.svg"
+                                 "id": "https:/issuer-host.app/templates/farmer/certifyHosted/farmer_id_with_face_single_page.svg"
                                },
                                "renderSuite": "svg-mustache",
                                "type": "TemplateRenderMethod"
-                             }
+                             },
+                                 {
+                                   "template": {
+                                     "mediaType": "image/svg+xml",
+                                     "id": "https:/issuer-host.app/templates/farmer/certifyHosted/farmer_id_with_qr_single_page.svg"
+                                   },
+                                   "renderSuite": "svg-mustache",
+                                   "type": "TemplateRenderMethod"
+                                 }
                            ],
                       "credentialSubject": {
                           "ownershipType": "Tenant",
@@ -79,48 +87,50 @@ struct ContentView: View {
                   }
     """
 
-    @State private var pdfBase64: String? = nil
-        @State private var svgList: [String] = [] // Store rendered SVGs
-    
-    var body: some View {
-        VStack(spacing: 30) {
-            Button("Render VC") {
-                Task {
-                    do {
-                        // Render VC to SVGs
-                        let svgList = try await renderer.generateCredentialDisplayContent(
-                            credentialFormat: .ldp_vc,
-                            wellKnownJson: nil,
-                            vcJsonString: testVc
-                        ).compactMap { $0 as? String }
-                        print("Replaced Template::::::")
-                    } catch {
-                        print("❌ Error rendering VC: \(error)")
-                    }
-                }
-            }
-                
-                // 2️⃣ Convert rendered SVGs → PDF
-            Button("SVG → PDF") {
-                guard !svgList.isEmpty else {
-                    print("⚠️ No SVGs available. Please render VC first.")
-                    return
-                }
+    @State private var svgList: [String] = []
+      @State private var pdfBase64: String? = nil
+      
+      var body: some View {
+          VStack(spacing: 20) {
+              Button("Render VC → SVG") {
+                  Task {
+                      do {
+                          self.svgList = try await renderer.generateCredentialDisplayContent(
+                              credentialFormat: .ldp_vc,
+                              wellKnownJson: nil,
+                              vcJsonString: testVc
+                          ).compactMap { $0 as? String }
+                          print("✅ SVGs: \(svgList.count)")
+                      } catch {
+                          print("❌ Error: \(error)")
+                      }
+                  }
+              }
+              
+              Button("Convert SVG to PDF") {
+                  Task {
+                      guard !svgList.isEmpty else {
+                          print("⚠️ SVG list is empty.")
+                          return
+                      }
 
-                pdfBase64 = renderer.convertSvgToPdf(svgList: svgList)
-                
-                if let pdfBase64 = pdfBase64 {
-                    print("📄 PDF Base64 length: \(pdfBase64.count)")
-                    print("📄 Full Base64 string:\n\(pdfBase64)")
-                }
-            }
-            .padding()
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(10)
-        }
-            .padding()
-    }
+                      if let base64 = await renderer.convertSvgToPdf(svgList: svgList) {
+                          self.pdfBase64 = base64
+                          print("✅ PDF Base64 length: \(base64.count)")
+                          print("✅ PDF Base64 : \(base64)")
+                      } else {
+                          print("❌ Failed to convert SVG to PDF")
+                      }
+                  }
+              }
+              .padding()
+              .background(Color.blue)
+              .foregroundColor(.white)
+              .cornerRadius(10)
+
+          }
+          .padding()
+      }
 }
 
     #Preview {
