@@ -428,6 +428,37 @@ final class InjiVcRendererTests: XCTestCase {
         ])
     }
     
+    func testUsesProvidedQrCodeDataForQrGeneration() throws {
+        let vcJsonString = """
+        {
+            "credentialSubject": {
+                "email": "test@test.com"
+            },
+            "renderMethod": {
+                "type": "TemplateRenderMethod",
+                "renderSuite": "svg-mustache",
+                "template": {
+                    "id": "https://degree.example/credential-templates/qrcode.svg",
+                    "mediaType": "image/svg+xml"
+                }
+            }
+        }
+        """
+
+        let qrCodeData = "CUSTOM_QR_DATA"
+
+        let resultAny = try renderer.generateCredentialDisplayContent(
+            credentialFormat: .ldp_vc,
+            vcJsonString: vcJsonString,
+            qrCodeData: qrCodeData
+        )
+
+        let result = resultAny.compactMap { $0 as? String }
+
+        XCTAssertTrue(result.first?.contains(Constants.qrImagePrefix) == true)
+    }
+
+    
     
 }
 

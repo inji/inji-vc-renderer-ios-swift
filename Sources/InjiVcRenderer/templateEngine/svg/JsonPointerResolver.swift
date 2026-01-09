@@ -130,9 +130,10 @@ final class JsonPointerResolver {
         svgTemplate: String,
         vcJson: [String: Any],
         renderMethodElement: [String: Any],
-        vcJsonString: String
+        vcJsonString: String,
+        qrCodeData: String?
     ) throws -> String {
-        let svgWithQrCodeReplaced = replaceQrCodePlaceholder(svgTemplate: svgTemplate, vcJsonString: vcJsonString)
+        let svgWithQrCodeReplaced = replaceQrCodePlaceholder(svgTemplate: svgTemplate, vcJsonString: vcJsonString, qrCodeData: qrCodeData)
         return try replaceVcPlaceholders(svgTemplate: svgWithQrCodeReplaced, vcJson: vcJson, element: renderMethodElement)
     }
     
@@ -153,16 +154,24 @@ final class JsonPointerResolver {
     
     private func replaceQrCodePlaceholder(
         svgTemplate: String,
-            vcJsonString: String
+            vcJsonString: String,
+        qrCodeData: String?
         ) -> String {
             guard svgTemplate.contains(Constants.qrCodePlaceholder) else {
                 return svgTemplate
             }
+            
+            let qrSource: String
+                if let qrData = qrCodeData, !qrData.isEmpty {
+                    qrSource = qrData
+                } else {
+                    qrSource = vcJsonString
+                }
 
             let qrBase64: String?
             do {
                 qrBase64 = try qrCodeGenerator.generateQRCodeImage(
-                    vcJson: vcJsonString,
+                    vcJson: qrSource,
                     traceabilityId: traceabilityId
                 )
             } catch {
