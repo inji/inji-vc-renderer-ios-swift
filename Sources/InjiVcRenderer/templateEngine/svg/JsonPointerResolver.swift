@@ -160,20 +160,22 @@ final class JsonPointerResolver {
             guard svgTemplate.contains(Constants.qrCodePlaceholder) else {
                 return svgTemplate
             }
-            
-            let qrSource: String
-                if let qrData = qrCodeData, !qrData.isEmpty {
-                    qrSource = qrData
-                } else {
-                    qrSource = vcJsonString
-                }
+        
 
             let qrBase64: String?
             do {
-                qrBase64 = try qrCodeGenerator.generateQRCodeImage(
-                    qrData: qrSource,
-                    traceabilityId: traceabilityId
-                )
+                let qrSource: String
+                    if let qrData = qrCodeData, !qrData.isEmpty {
+                        qrBase64 = try qrCodeGenerator.generateQRCodeImage(
+                            qrData: qrData,
+                            traceabilityId: traceabilityId
+                        )
+                    } else {
+                        qrBase64 = try qrCodeGenerator.generateQRCodeImage(
+                            vcJson: vcJsonString,
+                            traceabilityId: traceabilityId
+                        )
+                    }
             } catch {
                 qrBase64 = nil
             }
