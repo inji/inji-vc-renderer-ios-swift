@@ -11,18 +11,8 @@ public class QrCodeGenerator: QrCodeGeneratorProtocol {
         }
         throw QRCodeGenerationFailureException(traceabilityId: traceabilityId, className: "QrCodeGenerator")
     }
-    
-    public func generateQRCodeImage(
-            vcJson: String,
-            traceabilityId: String
-        ) throws -> String {
-            return try generateQRCodeImage(
-                qrData: vcJson,
-                traceabilityId: traceabilityId
-            )
-        }
 }
 
 protocol QrCodeGeneratorProtocol {
-    func generateQRCodeImage(vcJson: String, traceabilityId: String) throws -> String
+    func generateQRCodeImage(qrData: String, traceabilityId: String) throws -> String
 }

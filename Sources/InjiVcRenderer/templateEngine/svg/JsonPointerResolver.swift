@@ -171,7 +171,7 @@ final class JsonPointerResolver {
             let qrBase64: String?
             do {
                 qrBase64 = try qrCodeGenerator.generateQRCodeImage(
-                    vcJson: qrSource,
+                    qrData: qrSource,
                     traceabilityId: traceabilityId
                 )
             } catch {
