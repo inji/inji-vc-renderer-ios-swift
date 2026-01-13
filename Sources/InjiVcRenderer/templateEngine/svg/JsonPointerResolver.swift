@@ -164,18 +164,17 @@ final class JsonPointerResolver {
 
             let qrBase64: String?
             do {
-                let qrSource: String
-                    if let qrData = qrCodeData, !qrData.isEmpty {
+                if let qrData = qrCodeData, !qrData.isEmpty {
                         qrBase64 = try qrCodeGenerator.generateQRCodeQrData(
                             qrData: qrData,
                             traceabilityId: traceabilityId
                         )
                     } else {
-                        qrBase64 = try qrCodeGenerator.generateQRCodeVcJson(
-                            vcJson: vcJsonString,
-                            traceabilityId: traceabilityId
-                        )
-                    }
+                    qrBase64 = try qrCodeGenerator.generateQRCodeVcJson(
+                        vcJson: vcJsonString,
+                        traceabilityId: traceabilityId
+                    )
+                }
             } catch {
                 qrBase64 = nil
             }
