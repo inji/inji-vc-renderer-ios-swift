@@ -24,7 +24,7 @@ final class QrCodeGeneratorTests: XCTestCase {
             _ = pixelPassProp
         }
         
-        let result = try generator.generateQRCodeVcJson(vcJson: "{\"id\":\"123\"}", traceabilityId: "trace-1")
+        let result = try generator.generateFromVcJson(vcJson: "{\"id\":\"123\"}", traceabilityId: "trace-1")
         
         XCTAssertFalse(result.isEmpty)
         XCTAssertNotNil(Data(base64Encoded: result))
@@ -35,7 +35,7 @@ final class QrCodeGeneratorTests: XCTestCase {
         mockPixelPass.shouldReturnData = false
         let generator = QrCodeGenerator()
         
-        XCTAssertThrowsError(try generator.generateQRCodeVcJson(vcJson: "", traceabilityId: "trace-2")) { error in
+        XCTAssertThrowsError(try generator.generateFromVcJson(vcJson: "", traceabilityId: "trace-2")) { error in
             XCTAssertTrue(error is QRCodeGenerationFailureException)
         }
     }
@@ -43,7 +43,7 @@ final class QrCodeGeneratorTests: XCTestCase {
     func testGenerateQRCodeQrData_success() throws {
         let generator = QrCodeGenerator()
         // Use a simple, valid input that PixelPass can handle
-        let result = try generator.generateQRCodeQrData(qrData: "HELLO-QR-DATA", traceabilityId: "trace-qr-success")
+        let result = try generator.generateFromQrData(qrData: "HELLO-QR-DATA", traceabilityId: "trace-qr-success")
         
         XCTAssertFalse(result.isEmpty, "Base64 PNG data string should not be empty")
         XCTAssertNotNil(Data(base64Encoded: result), "Result should be valid Base64")
@@ -53,7 +53,7 @@ final class QrCodeGeneratorTests: XCTestCase {
         let generator = QrCodeGenerator()
         
         XCTAssertThrowsError(
-            try generator.generateQRCodeQrData(qrData: "", traceabilityId: "trace-qr-failure")
+            try generator.generateFromQrData(qrData: "", traceabilityId: "trace-qr-failure")
         ) { error in
             XCTAssertTrue(error is QRCodeGenerationFailureException)
         }
