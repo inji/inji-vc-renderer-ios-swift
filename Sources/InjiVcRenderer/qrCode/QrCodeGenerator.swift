@@ -6,7 +6,6 @@ public class QrCodeGenerator: QrCodeGeneratorProtocol {
     private let pixelPass = PixelPass()
     
     func generateFromVcJson(vcJson: String, traceabilityId: String) throws -> String {
-        let pixelPass = PixelPass()
         if let qrCodeData = pixelPass.generateQRCode(data: vcJson, ecc: .M, header: "HDR") {
             return qrCodeData.base64EncodedString()
         }
@@ -14,7 +13,6 @@ public class QrCodeGenerator: QrCodeGeneratorProtocol {
     }
     
     func generateFromQrData(qrData: String, traceabilityId: String) throws -> String {
-        let pixelPass = PixelPass()
         if let qrCodeData = pixelPass.generateQRImageData(data: qrData, ecc: .M) {
             return qrCodeData.base64EncodedString()
         }
