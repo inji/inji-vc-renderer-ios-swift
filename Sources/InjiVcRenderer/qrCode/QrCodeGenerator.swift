@@ -18,7 +18,7 @@ public class QrCodeGenerator: QrCodeGeneratorProtocol {
         if let qrCodeData = pixelPass.generateQRImageData(data: qrData, ecc: .M) {
             return qrCodeData.base64EncodedString()
         }
-        print(" QrCodeGenerator Failed to generate QR from qrData: \(qrData)  traceabilityId=\(traceabilityId)")
+        print("QrCodeGenerator Failed to generate QR traceabilityId=\(traceabilityId)")
         throw QRCodeGenerationFailureException(traceabilityId: traceabilityId, className: "QrCodeGenerator")
     }
 }
