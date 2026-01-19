@@ -23,8 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mosip/pixelpass-ios-swift.git",
       "state" : {
-        "revision" : "78faea2ff48626ef9a6d198123bcf7b299acefd1",
-        "version" : "0.6.3"
+        "branch" : "develop",
+        "revision" : "b637a7c82fe685c94b372c11ab1840c5b8bb75cc"
       }
     },
     {
@@ -32,8 +32,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/abhip2565/SwiftCBOR",
       "state" : {
-        "revision" : "cc4e195a0ea2dce88f2fd6c6d73b2504e3c884fd",
-        "version" : "0.5.0"
+        "branch" : "release-0.1.x",
+        "revision" : "cc4e195a0ea2dce88f2fd6c6d73b2504e3c884fd"
       }
     },
     {
