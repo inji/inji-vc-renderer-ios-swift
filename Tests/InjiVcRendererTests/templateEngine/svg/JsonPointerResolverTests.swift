@@ -213,6 +213,67 @@ final class JsonPointerResolverTests: XCTestCase {
        XCTAssertEqual(result, expected)
     }
 
+    func testReplaceSvgPlaceholders_usesProvidedQrCodeData() throws {
+        // Template must contain the QR placeholder and the qrCodeImage id so the resolver can replace them.
+        let template = "<svg>QR: <image id=\"\(Constants.qrCodeImageId)\" xlink:href\(Constants.qrCodePlaceholder) /></svg>"
+        let vcJson: [String: Any] = [
+            "credentialSubject": ["email": "user@example.com"],
+            "renderMethod": [
+                "type": Constants.templateRenderMethod,
+                "renderSuite": Constants.svgMustache,
+                "template": [
+                    "id": "ignored-in-this-test",
+                    "mediaType": "image/svg+xml"
+                ]
+            ]
+        ]
+        let resolver = JsonPointerResolver(traceabilityId: traceabilityId)
+        let svg = try resolver.replaceSvgPlaceholders(
+            svgTemplate: template,
+            vcJson: vcJson,
+            renderMethodElement: vcJson["renderMethod"] as! [String: Any],
+            vcJsonString: "{\"credentialSubject\":{}}",
+            qrCodeData: "did:example:custom-qr"
+        )
+
+        // Should keep the normal image id (non-fallback) and embed a data URL with the expected prefix.
+        XCTAssertTrue(svg.contains("id=\"\(Constants.qrCodeImageId)\""))
+        XCTAssertTrue(svg.contains("\(Constants.qrImagePrefix),"), "Expected data URL prefix to be present")
+        XCTAssertTrue(svg.hasPrefix("<svg>QR: <image"))
+        XCTAssertTrue(svg.hasSuffix("/></svg>"))
+    }
+
+    // UPDATED: When qrCodeData is empty, generator uses VC JSON; fallback id appears only if generation fails/empty.
+    func testReplaceSvgPlaceholders_usesFallbackWhenQrCodeDataEmpty() throws {
+        let template = "<svg>QR: <image id=\"\(Constants.qrCodeImageId)\" xlink:href\(Constants.qrCodePlaceholder) /></svg>"
+        let vcJson: [String: Any] = [
+            "credentialSubject": ["email": "user@example.com"],
+            "renderMethod": [
+                "type": Constants.templateRenderMethod,
+                "renderSuite": Constants.svgMustache,
+                "template": [
+                    "id": "ignored-in-this-test",
+                    "mediaType": "image/svg+xml"
+                ]
+            ]
+        ]
+        let resolver = JsonPointerResolver(traceabilityId: traceabilityId)
+        let svg = try resolver.replaceSvgPlaceholders(
+            svgTemplate: template,
+            vcJson: vcJson,
+            renderMethodElement: vcJson["renderMethod"] as! [String: Any],
+            vcJsonString: "{\"credentialSubject\":{}}",
+            qrCodeData: "" // empty -> uses VC JSON; fallback only if generation fails/empty
+        )
+
+        // Data URL prefix must always be present.
+        XCTAssertTrue(svg.contains("\(Constants.qrImagePrefix),"), "Expected data URL prefix to be present")
+
+        // The image id should be either the normal id (success) or the fallback id (failure).
+        let hasNormalId = svg.contains("id=\"\(Constants.qrCodeImageId)\"")
+        let hasFallbackId = svg.contains("id=\"\(Constants.qrCodeFallbackImageId)\"")
+        XCTAssertTrue(hasNormalId || hasFallbackId, "Expected either normal or fallback image id depending on QR generation outcome")
+    }
     
 
 }

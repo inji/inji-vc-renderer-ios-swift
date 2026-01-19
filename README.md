@@ -19,6 +19,7 @@ To include InjiVcRenderer in your Swift project:
     - The API supports passing custom data for QR code generation via `qrCodeData`.
     - If `qrCodeData` is provided, it will be used to generate the QR code.
     - If `qrCodeData` is not provided or empty, the full Verifiable Credential JSON will be used as fallback.
+    NOTE : It is preferred that qrCodeData provided to the method is already encoded (for example, Base45-encoded).
        
 - This method takes entire VC data as input.
 - Example :
