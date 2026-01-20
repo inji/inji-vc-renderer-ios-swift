@@ -13,7 +13,7 @@ public class QrCodeGenerator: QrCodeGeneratorProtocol {
     }
     
     func generateFromQrData(qrData: String, traceabilityId: String) throws -> String {
-        if let qrCodeData = pixelPass.generateQRImageData(data: qrData, ecc: .M) {
+        if let qrCodeData = pixelPass.generateQRImageData(qrText: qrData, ecc: .M) {
             return qrCodeData.base64EncodedString()
         }
         print("QrCodeGenerator Failed to generate QR traceabilityId=\(traceabilityId)")
