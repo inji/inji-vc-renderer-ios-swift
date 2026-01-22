@@ -49,14 +49,13 @@ final class QrCodeGeneratorTests: XCTestCase {
         XCTAssertNotNil(Data(base64Encoded: result), "Result should be valid Base64")
     }
     
-    func testGenerateQRCodeQrData_failureOnEmptyInput() {
+    func testGenerateQRCodeQrData_allowsEmptyInput() throws {
         let generator = QrCodeGenerator()
         
-        XCTAssertThrowsError(
-            try generator.generateFromQrData(qrData: "", traceabilityId: "trace-qr-failure")
-        ) { error in
-            XCTAssertTrue(error is QRCodeGenerationFailureException)
-        }
+        let result = try generator.generateFromQrData(qrData: "", traceabilityId: "trace-qr-empty")
+        
+        XCTAssertFalse(result.isEmpty, "Base64 PNG data string should not be empty for empty input")
+        XCTAssertNotNil(Data(base64Encoded: result), "Result should be valid Base64")
     }
 }
 
