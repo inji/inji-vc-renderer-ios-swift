@@ -428,6 +428,43 @@ final class InjiVcRendererTests: XCTestCase {
         ])
     }
     
+    func testUsesProvidedQrCodeDataForQrGeneration() throws {
+        let vcJsonString = """
+        {
+            "credentialSubject": {
+                "email": "user@example.com"
+            },
+            "renderMethod": {
+                "type": "TemplateRenderMethod",
+                "renderSuite": "svg-mustache",
+                "template": {
+                    "id": "https://degree.example/credential-templates/qrcode.svg",
+                    "mediaType": "image/svg+xml"
+                }
+            }
+        }
+        """
+        let customQrData = "did:example:custom-qr-data"
+        
+        let resultAny = try renderer.generateCredentialDisplayContent(
+            credentialFormat: .ldp_vc,
+            vcJsonString: vcJsonString,
+            qrCodeData: customQrData
+        )
+        let result = resultAny.compactMap { $0 as? String }
+        XCTAssertEqual(result.count, 1)
+        
+        let svg = result[0]
+        XCTAssertTrue(svg.contains("id = \"\(Constants.qrCodeImageId)\""))
+        
+        XCTAssertTrue(svg.contains("xlink:href\(Constants.qrImagePrefix),"), "Expected data URL prefix to be inserted after xlink:href")
+        
+        XCTAssertTrue(svg.hasPrefix("<svg>QR code : <image"), "SVG should contain the QR image tag")
+        XCTAssertTrue(svg.hasSuffix("</svg>"), "SVG should end properly")
+    }
+
+
+    
     
 }
 

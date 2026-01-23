@@ -20,7 +20,7 @@ public class InjiVcRenderer {
                  
      - Returns: A list of rendered SVG strings. Empty list if no valid render methods found or on error.  Return is List<Any> to accommodate future extensions.
      */
-    public func generateCredentialDisplayContent(credentialFormat: CredentialFormat, wellKnownJson: String? = nil, vcJsonString: String) throws -> [Any] {
+    public func generateCredentialDisplayContent(credentialFormat: CredentialFormat, wellKnownJson: String? = nil, vcJsonString: String, qrCodeData: String? = nil) throws -> [Any] {
         let templateHelper = TemplateHelper(traceabilityId: traceabilityId)
         let jsonPointerResolver = JsonPointerResolver(traceabilityId: traceabilityId)
 
@@ -38,7 +38,8 @@ public class InjiVcRenderer {
                             svgTemplate: rawSvg,
                             vcJson: vcJsonObject,
                             renderMethodElement: renderMethodElement,
-                            vcJsonString: vcJsonString
+                            vcJsonString: vcJsonString,
+                            qrCodeData: qrCodeData
                         )
                     }
                 }

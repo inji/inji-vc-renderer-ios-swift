@@ -8,10 +8,19 @@ To include InjiVcRenderer in your Swift project:
 - Add package dependency: Enter Package URL of InjiVcRenderer repo
 
 ### API
-- `generateCredentialDisplayContent(credentialFormat: CredentialFormat, wellKnownJson: String? = nil, vcJsonString: String): [Any]` - expects the Verifiable Credential as parameter and returns the replaced SVG Template.
+- `generateCredentialDisplayContent(credentialFormat: CredentialFormat, wellKnownJson: String? = nil, vcJsonString: String, qrCodeData: String? = nil): [Any]` - expects the Verifiable Credential as parameter and returns the replaced SVG Template.
     - `vcJsonString` - VC Downloaded in stringified format.
     - `wellKnownJson` - Well-known Json downloaded in stringified format. It is optional parameter.
     - `credentialFormat` - Enum to specify the credential format. Currently only LDP_VC format is supported.
+    - `qrCodeData` (optional) - Custom data used to generate the QR code.
+       -  If provided → QR code is generated using this value.
+       -  If not provided or empty → entire VC JSON string is used as fallback.
+#### Custom QR Code Data Support
+    - The API supports passing custom data for QR code generation via `qrCodeData`.
+    - If `qrCodeData` is provided, it will be used to generate the QR code.
+    - If `qrCodeData` is not provided or empty, the full Verifiable Credential JSON will be used as fallback.
+    NOTE : It is preferred that qrCodeData provided to the method is already encoded (for example, Base45-encoded).
+       
 - This method takes entire VC data as input.
 - Example :
 ```
@@ -70,7 +79,7 @@ Sources
 
 1. InvalidRenderSuiteException is thrown if render suite is not `svg-mustache`
 2. InvalidRenderMethodTypeException is thrown if render method type is not `TemplateRenderMethod`
-3. QRCodeGenerationFailureException is thrown if QR code generation fails
+3. QRCodeGenerationFailureException is thrown if QR code generation fails and fallback QR is also unavailable
 4. MissingTemplateIdException is thrown if template id is missing in render method
 5. SvgFetchException is thrown if fetching SVG from the URL fails
 6. InvalidRenderMethodException is thrown if render method object is invalid
@@ -104,7 +113,9 @@ Sources
 #### Preprocessing the SVG Template
 
 ##### QR Code Placeholder
-  - If the SVG Template has `{{/qrCodeImage}}` placeholder, it will generate the QR code using Pixelpass library and replace the placeholder with generated QR code image in base64 format.
+  - If the SVG Template has `{{/qrCodeImage}}` placeholder:
+    - QR code is generated using `qrCodeData` if provided.
+    - Otherwise, QR code is generated using the entire VC JSON string.
     - Example:
         ```
         let vcJson = {"credentialSubject" : "id": "did:example:123456789", "name": "Tester"}
@@ -115,6 +126,18 @@ Sources
         ```
 - Note: It is mandatory to have `id` field in the `<image>` as `qrCodeImage` and placeholder as `{{/qrCodeImage}}` to generate the QR code.  Because if it is fallback scenario, `<image>` id will be replaced with `qrCodeFallbackImage` which can be used to identify from consumer side if design have valid QR code or fallback one.
 
+##### Custom QR Code Data Support (NEW)
+      ````
+           let renderer = InjiVcRenderer(traceabilityId: "trace-123")
+           let result = try renderer.generateCredentialDisplayContent(
+                 credentialFormat: .ldp_vc,
+                 vcJsonString: vcJson,
+                 qrCodeData: "did:example:123456789"
+           )
+      ````
+
+
+➡ QR code encodes did:example:123456789 instead of full VC JSON.
 ##### Handling Render Property
   - If the `template` field is an object and has `renderMethod` property. Property in the `renderMethod` will be taken into consideration for further processing and rest of the fields placeholders will be replaced with empty string.
     - Example:
