@@ -12,6 +12,30 @@ final class JsonPointerResolver {
     private static let placeholderRegex = try! NSRegularExpression(
         pattern: #"\{\{(/[^}]*)\}\}|\{\{\}\}"#
     )
+    private static let imageTagRegex = try! NSRegularExpression(
+        pattern: #"<(?:[\w.-]+:)?image\b[^>]*>"#,
+        options: [.caseInsensitive]
+    )
+    private static let hrefAttributeRegex = try! NSRegularExpression(
+        pattern: #"(?<![\w.:-])((?:[\w.-]+:)?)href\s*=\s*(["'])(.*?)\2"#,
+        options: [.caseInsensitive, .dotMatchesLineSeparators]
+    )
+    private static let malformedPercentEscapeRegex = try! NSRegularExpression(
+        pattern: "%(?![0-9A-Fa-f]{2})"
+    )
+    private static let httpUrlRegex = try! NSRegularExpression(
+        pattern: #"^https?://(?:[^/?#@\s]*@)?[^/?#@:\s][^/?#@\s]*(?:[/?#]|$)"#,
+        options: [.caseInsensitive]
+    )
+    private static let imageSignatures: [[UInt8]] = [
+        [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A],
+        [0xFF, 0xD8, 0xFF],
+        Array("GIF87a".utf8),
+        Array("GIF89a".utf8),
+        [0x42, 0x4D],
+        [0x49, 0x49, 0x2A, 0x00],
+        [0x4D, 0x4D, 0x00, 0x2A]
+    ]
     public static let className = String(describing: JsonPointerResolver.self)
     private let qrCodeGenerator: QrCodeGeneratorProtocol = QrCodeGenerator() as QrCodeGeneratorProtocol
 
@@ -134,7 +158,8 @@ final class JsonPointerResolver {
         qrCodeData: String?
     ) throws -> String {
         let svgWithQrCodeReplaced = replaceQrCodePlaceholder(svgTemplate: svgTemplate, vcJsonString: vcJsonString, qrCodeData: qrCodeData)
-        return try replaceVcPlaceholders(svgTemplate: svgWithQrCodeReplaced, vcJson: vcJson, element: renderMethodElement)
+        let svgWithValues = try replaceVcPlaceholders(svgTemplate: svgWithQrCodeReplaced, vcJson: vcJson, element: renderMethodElement)
+        return JsonPointerResolver.replaceInvalidImageHrefs(svgTemplate: svgWithValues)
     }
     
     private func replaceVcPlaceholders(svgTemplate: String, vcJson: [String: Any], element: [String: Any])throws -> String {
@@ -193,4 +218,112 @@ final class JsonPointerResolver {
                 .replacingOccurrences(of: Constants.qrCodePlaceholder, with: qrImageTag)
                 .replacingOccurrences(of: Constants.qrCodeImageId, with: imageId)
         }
+
+    private static func replaceInvalidImageHrefs(svgTemplate: String) -> String {
+        var result = svgTemplate
+        let imageMatches = imageTagRegex.matches(
+            in: svgTemplate,
+            range: NSRange(svgTemplate.startIndex..<svgTemplate.endIndex, in: svgTemplate)
+        ).reversed()
+
+        for imageMatch in imageMatches {
+            guard let imageRange = Range(imageMatch.range, in: result) else { continue }
+            result.replaceSubrange(imageRange, with: replaceInvalidHrefs(imageTag: String(result[imageRange])))
+        }
+        return result
+    }
+
+    private static func replaceInvalidHrefs(imageTag: String) -> String {
+        var result = imageTag
+        let hrefMatches = hrefAttributeRegex.matches(
+            in: imageTag,
+            range: NSRange(imageTag.startIndex..<imageTag.endIndex, in: imageTag)
+        ).reversed()
+
+        for hrefMatch in hrefMatches {
+            guard let hrefRange = Range(hrefMatch.range, in: result),
+                  let prefixRange = Range(hrefMatch.range(at: 1), in: imageTag),
+                  let quoteRange = Range(hrefMatch.range(at: 2), in: imageTag),
+                  let valueRange = Range(hrefMatch.range(at: 3), in: imageTag),
+                  !isRenderableImageHref(String(imageTag[valueRange])) else {
+                continue
+            }
+            let quote = imageTag[quoteRange]
+            result.replaceSubrange(hrefRange, with: "\(imageTag[prefixRange])href=\(quote)\(NoImagePlaceholder.dataUri)\(quote)")
+        }
+        return result
+    }
+
+    private static func isRenderableImageHref(_ href: String) -> Bool {
+        let value = href.trimmingCharacters(in: .whitespacesAndNewlines)
+        if httpUrlRegex.firstMatch(in: value, range: NSRange(value.startIndex..<value.endIndex, in: value)) != nil {
+            return true
+        }
+        return hasPrefixIgnoringCase(value, "data:") && isValidImageDataUri(value)
+    }
+
+    private static func isValidImageDataUri(_ dataUri: String) -> Bool {
+        let content = dataUri.dropFirst("data:".count)
+        guard let commaIndex = content.firstIndex(of: ",") else { return false }
+
+        let metadata = content[..<commaIndex]
+            .split(separator: ";", omittingEmptySubsequences: false)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+        guard let mediaType = metadata.first, mediaType.hasPrefix("image/") else { return false }
+
+        let payload = String(content[content.index(after: commaIndex)...]).filter { !$0.isWhitespace }
+        let bytes = metadata.dropFirst().contains("base64") ? decodeBase64(payload) : decodePercentEncoded(payload)
+        return bytes.map { isImageContent($0, mediaType: mediaType) } ?? false
+    }
+
+    private static func decodeBase64(_ value: String) -> Data? {
+        return isBase64(value) ? Data(base64Encoded: value) : nil
+    }
+
+    private static func decodePercentEncoded(_ value: String) -> Data? {
+        guard isPercentEncoded(value) else { return nil }
+        let utf8 = Array(value.utf8)
+        var bytes = Data()
+        var index = 0
+        while index < utf8.count {
+            if utf8[index] == UInt8(ascii: "%"), index + 2 < utf8.count,
+               let byte = UInt8(String(decoding: utf8[(index + 1)...(index + 2)], as: UTF8.self), radix: 16) {
+                bytes.append(byte)
+                index += 3
+            } else {
+                bytes.append(utf8[index])
+                index += 1
+            }
+        }
+        return bytes
+    }
+
+    private static func isImageContent(_ bytes: Data, mediaType: String) -> Bool {
+        if mediaType == "image/svg+xml" {
+            return String(decoding: bytes, as: UTF8.self).range(of: "<svg", options: .caseInsensitive) != nil
+        }
+        return imageSignatures.contains { bytes.starts(with: $0) } || isWebP(bytes)
+    }
+
+    private static func isWebP(_ bytes: Data) -> Bool {
+        guard #available(iOS 14, *) else { return false }
+        return bytes.starts(with: Array("RIFF".utf8)) && bytes.dropFirst(8).starts(with: Array("WEBP".utf8))
+    }
+
+    private static func isPercentEncoded(_ value: String) -> Bool {
+        let range = NSRange(value.startIndex..<value.endIndex, in: value)
+        return !value.isEmpty && malformedPercentEscapeRegex.firstMatch(in: value, range: range) == nil
+    }
+
+    private static func isBase64(_ value: String) -> Bool {
+        let paddingCount = value.reversed().prefix(while: { $0 == "=" }).count
+        return !value.isEmpty
+            && value.count % 4 == 0
+            && paddingCount <= 2
+            && value.dropLast(paddingCount).allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "+" || $0 == "/") }
+    }
+
+    private static func hasPrefixIgnoringCase(_ value: String, _ prefix: String) -> Bool {
+        return value.range(of: prefix, options: [.anchored, .caseInsensitive]) != nil
+    }
 }

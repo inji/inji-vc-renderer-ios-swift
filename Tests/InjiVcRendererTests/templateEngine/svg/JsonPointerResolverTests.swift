@@ -274,6 +274,249 @@ final class JsonPointerResolverTests: XCTestCase {
         let hasFallbackId = svg.contains("id=\"\(Constants.qrCodeFallbackImageId)\"")
         XCTAssertTrue(hasNormalId || hasFallbackId, "Expected either normal or fallback image id depending on QR generation outcome")
     }
-    
 
+    func testReplaceSvgPlaceholders_missingFaceUsesPlaceholderAndTextDashIsKept() throws {
+        let template = "<svg><text>{{/credentialSubject/email}}</text>" +
+            "<image id=\"portrait\" x=\"10\" y=\"12\" width=\"80\" height=\"100\" xlink:href=\"{{/credentialSubject/face}}\"/>" +
+            "<image id=\"logo\" xlink:href=\"\(tinyPngDataUri)\"/></svg>"
+        let expected = "<svg><text>-</text>" +
+            "<image id=\"portrait\" x=\"10\" y=\"12\" width=\"80\" height=\"100\" xlink:href=\"\(NoImagePlaceholder.dataUri)\"/>" +
+            "<image id=\"logo\" xlink:href=\"\(tinyPngDataUri)\"/></svg>"
+
+        let result = try renderSvg(template, credentialSubject: ["fullName": "John"])
+
+        XCTAssertEqual(result, expected)
+    }
+
+    func testReplaceSvgPlaceholders_staticDashImageHrefUsesPlaceholder() throws {
+        let result = try renderSvg("<svg><image id=\"portrait\" xlink:href=\"-\"/></svg>", credentialSubject: [:])
+
+        XCTAssertEqual(result, portraitSvg(href: NoImagePlaceholder.dataUri))
+    }
+
+    func testReplaceSvgPlaceholders_validFaceDataUriIsKept() throws {
+        let result = try renderSvg(portraitTemplate, credentialSubject: ["face": tinyPngDataUri])
+
+        XCTAssertEqual(result, portraitSvg(href: tinyPngDataUri))
+    }
+
+    func testReplaceSvgPlaceholders_emptyOrNullFaceUsesPlaceholder() throws {
+        let faces: [Any] = ["", "   ", NSNull()]
+
+        for face in faces {
+            let result = try renderSvg(portraitTemplate, credentialSubject: ["face": face])
+
+            XCTAssertEqual(result, portraitSvg(href: NoImagePlaceholder.dataUri), "face: \(face)")
+        }
+    }
+
+    func testReplaceSvgPlaceholders_faceNotInRenderPropertyUsesPlaceholder() throws {
+        let renderMethodElement: [String: Any] = [
+            "type": Constants.templateRenderMethod,
+            "template": ["renderProperty": ["/credentialSubject/fullName"]]
+        ]
+
+        let result = try renderSvg(
+            portraitTemplate,
+            credentialSubject: ["fullName": "John", "face": tinyPngDataUri],
+            renderMethodElement: renderMethodElement
+        )
+
+        XCTAssertEqual(result, portraitSvg(href: NoImagePlaceholder.dataUri))
+    }
+
+    func testReplaceSvgPlaceholders_missingFaceAfterDataUriPrefixUsesPlaceholder() throws {
+        let template = "<svg><image id=\"portrait\" xlink:href=\"data:image/png;base64,{{/credentialSubject/face}}\"/></svg>"
+
+        let result = try renderSvg(template, credentialSubject: [:])
+
+        XCTAssertEqual(result, portraitSvg(href: NoImagePlaceholder.dataUri))
+    }
+
+    func testReplaceSvgPlaceholders_malformedFaceUsesPlaceholder() throws {
+        let malformedFaces = [
+            "abc",
+            "null",
+            "data:image/png;base64,abc",
+            "data:image/png;base64,%%garbage%%",
+            "data:image/png;base64,iVBO=Rw0",
+            "data:image/png;base64,",
+            "data:image/png;base64",
+            "data:text/plain;base64,aGVsbG8=",
+            "data:image/png,",
+            "data:image/png,%GG",
+            "data:image/svg+xml,%3Csvg%",
+            "data:image/png;\nbase64,abc"
+        ]
+
+        for face in malformedFaces {
+            let result = try renderSvg(portraitTemplate, credentialSubject: ["face": face])
+
+            XCTAssertEqual(result, portraitSvg(href: NoImagePlaceholder.dataUri), "face: \(face)")
+        }
+    }
+
+    func testReplaceSvgPlaceholders_relativePathAndFragmentFaceUsePlaceholder() throws {
+        let unloadableFaces = ["logo.png", "./logo.png", "../images/logo.png", "#photo", "file:///tmp/logo.png"]
+
+        for face in unloadableFaces {
+            let result = try renderSvg(portraitTemplate, credentialSubject: ["face": face])
+
+            XCTAssertEqual(result, portraitSvg(href: NoImagePlaceholder.dataUri), "face: \(face)")
+        }
+    }
+
+    func testReplaceSvgPlaceholders_validFaceWithLineBreaksIsKept() throws {
+        let face = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ\n" +
+            "AAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+
+        let result = try renderSvg(portraitTemplate, credentialSubject: ["face": face])
+
+        XCTAssertEqual(result, portraitSvg(href: face))
+    }
+
+    func testReplaceSvgPlaceholders_httpsImageHrefIsKept() throws {
+        let logoUrl = "https://example.com/logo.png"
+
+        let result = try renderSvg(portraitTemplate, credentialSubject: ["face": logoUrl])
+
+        XCTAssertEqual(result, portraitSvg(href: logoUrl))
+    }
+
+    func testReplaceSvgPlaceholders_httpUrlWithHostIsKept() throws {
+        let urls = [
+            "https://example.com:8080/logo.png",
+            "https://user:pw@example.com/logo.png",
+            "https://[::1]:8080/logo.png",
+            "HTTP://EXAMPLE.COM/LOGO.PNG"
+        ]
+
+        for url in urls {
+            let result = try renderSvg(portraitTemplate, credentialSubject: ["face": url])
+
+            XCTAssertEqual(result, portraitSvg(href: url), "face: \(url)")
+        }
+    }
+
+    func testReplaceSvgPlaceholders_dataUriWithoutSupportedImageContentUsesPlaceholder() throws {
+        let nonImageFaces = [
+            "data:image/png;base64,aGVsbG8=",
+            "data:image/png,hello",
+            "data:image/jpeg;base64,PHN2Zz48L3N2Zz4=",
+            "data:image/svg+xml;base64,aGVsbG8=",
+            "data:image/svg+xml,hello",
+            "data:image/webp;base64,UklGRhoAAABXQVZFZm10IA=="
+        ]
+
+        for face in nonImageFaces {
+            let result = try renderSvg(portraitTemplate, credentialSubject: ["face": face])
+
+            XCTAssertEqual(result, portraitSvg(href: NoImagePlaceholder.dataUri), "face: \(face)")
+        }
+    }
+
+    func testReplaceSvgPlaceholders_dataUriWithImageContentIsKept() throws {
+        let imageFaces = [
+            "data:image/png;base64,/9j/4AAQSkZJRg==",
+            "data:image/gif;base64,R0lGODlhAQABAAAAACw=",
+            "data:image/bmp;base64,Qk0AAAAA",
+            "data:image/tiff;base64,SUkqAA==",
+            "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4=",
+            "data:image/png,%89PNG%0D%0A%1A%0A"
+        ]
+
+        for face in imageFaces {
+            let result = try renderSvg(portraitTemplate, credentialSubject: ["face": face])
+
+            XCTAssertEqual(result, portraitSvg(href: face), "face: \(face)")
+        }
+    }
+
+    func testReplaceSvgPlaceholders_webpFaceIsKeptWhenSupported() throws {
+        let face = "data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA=="
+        let expectedHref: String
+        if #available(iOS 14, *) {
+            expectedHref = face
+        } else {
+            expectedHref = NoImagePlaceholder.dataUri
+        }
+
+        let result = try renderSvg(portraitTemplate, credentialSubject: ["face": face])
+
+        XCTAssertEqual(result, portraitSvg(href: expectedHref))
+    }
+
+    func testReplaceSvgPlaceholders_httpUrlWithoutHostUsesPlaceholder() throws {
+        let hostlessUrls = [
+            "https://", "http://", "HTTPS://", "https:///logo.png", "https://?size=1", "https://#photo",
+            "https://user@", "https://:443", "https://user@:443/logo.png"
+        ]
+
+        for url in hostlessUrls {
+            let result = try renderSvg(portraitTemplate, credentialSubject: ["face": url])
+
+            XCTAssertEqual(result, portraitSvg(href: NoImagePlaceholder.dataUri), "face: \(url)")
+        }
+    }
+
+    func testReplaceSvgPlaceholders_singleQuotedHrefUsesPlaceholderWithSameQuote() throws {
+        let result = try renderSvg("<svg><image id='portrait' href='-'></image></svg>", credentialSubject: [:])
+
+        XCTAssertEqual(result, "<svg><image id='portrait' href='\(NoImagePlaceholder.dataUri)'></image></svg>")
+    }
+
+    func testReplaceSvgPlaceholders_percentEncodedFaceIsKept() throws {
+        let face = "data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%2F%3E"
+
+        let result = try renderSvg(portraitTemplate, credentialSubject: ["face": face])
+
+        XCTAssertEqual(result, portraitSvg(href: face))
+    }
+
+    func testReplaceSvgPlaceholders_dataHrefAttributeIsUnchanged() throws {
+        let template = "<svg><image id=\"portrait\" data-href=\"-\" xlink:href=\"{{/credentialSubject/face}}\"/></svg>"
+
+        let result = try renderSvg(template, credentialSubject: [:])
+
+        XCTAssertEqual(result, "<svg><image id=\"portrait\" data-href=\"-\" xlink:href=\"\(NoImagePlaceholder.dataUri)\"/></svg>")
+    }
+
+    func testReplaceSvgPlaceholders_imageWithoutHrefIsUnchanged() throws {
+        let template = "<svg><image id=\"portrait\" width=\"80\" height=\"100\"/></svg>"
+
+        let result = try renderSvg(template, credentialSubject: [:])
+
+        XCTAssertEqual(result, template)
+    }
+
+    func testReplaceSvgPlaceholders_imageWithChildContentReplacesOnlyOpeningTagHref() throws {
+        let template = "<svg><image id=\"portrait\" xlink:href=\"{{/credentialSubject/face}}\">" +
+            "<title>Portrait</title><desc>href=\"-\"</desc></image></svg>"
+
+        let result = try renderSvg(template, credentialSubject: [:])
+
+        XCTAssertEqual(result, "<svg><image id=\"portrait\" xlink:href=\"\(NoImagePlaceholder.dataUri)\">" +
+            "<title>Portrait</title><desc>href=\"-\"</desc></image></svg>")
+    }
+
+    private let tinyPngDataUri = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+    private let portraitTemplate = "<svg><image id=\"portrait\" xlink:href=\"{{/credentialSubject/face}}\"/></svg>"
+
+    private func portraitSvg(href: String) -> String {
+        return "<svg><image id=\"portrait\" xlink:href=\"\(href)\"/></svg>"
+    }
+
+    private func renderSvg(
+        _ template: String,
+        credentialSubject: [String: Any],
+        renderMethodElement: [String: Any] = ["type": Constants.templateRenderMethod]
+    ) throws -> String {
+        return try JsonPointerResolver(traceabilityId: traceabilityId).replaceSvgPlaceholders(
+            svgTemplate: template,
+            vcJson: ["credentialSubject": credentialSubject],
+            renderMethodElement: renderMethodElement,
+            vcJsonString: "{}",
+            qrCodeData: nil
+        )
+    }
 }
